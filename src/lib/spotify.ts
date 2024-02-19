@@ -101,17 +101,20 @@ const getAlbumTracks = async ( {access_token, album_id, market='US', limit=50, o
 
 async function main() {
     const authorizationResult = await authorizeSpotify();
-    console.log("authorization_result = ", authorizationResult);
-
-    // const getArtistAlbum = await getArtistsAlbums({
-    //     access_token: AUTHORIZATION_RESULT.access_token,
-    //     artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
-    //     include_groups: INCLUDE_GROUPS[0],
-    //     limit: LIMIT,
-    //     offset: OFFSET,
-    // });
-
-   //console.log("getArtistAlbum = \n", getArtistAlbum);
+    let getArtistAlbum;
+    if(!authorizationResult){
+        console.error("Authorization failed");
+        return;
+    } else{
+        getArtistAlbum = await getArtistsAlbums({
+            access_token: authorizationResult.access_token,
+            artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
+            include_groups: INCLUDE_GROUPS[0],
+            limit: LIMIT,
+            offset: OFFSET,
+        });
+    }
+   console.log("getArtistAlbum = \n", getArtistAlbum);
 }
 
 main();

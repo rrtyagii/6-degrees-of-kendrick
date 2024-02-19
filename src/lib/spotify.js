@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -43,18 +44,13 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-var _this = this;
+Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
 var KENDRICK_LAMAR_SPOTIFY_ID = "2YZyLoL8N0Wb9xBt1NhZWg";
 var ALBUM_ID = "";
 var INCLUDE_GROUPS = ["album", "single", "appears_on", "compilation"];
 var LIMIT = 50;
 var OFFSET = 0;
-var AUTHORIZATION_RESULT = {
-    access_token: 'BQBsWYCyxjPJ-zEMF0vCf-MWr9nSDGITXvmMndUv9zVBUm4SBHjoRJtkY7xkiFjl44PQLDQV_PGOyaDfalrF6ga2O2DTckJ6Iro91coihF_0SP9ZoT0',
-    token_type: 'Bearer',
-    expires_in: 3600
-};
 function appendOrCreateJSONFile(filename, data) {
     return __awaiter(this, void 0, void 0, function () {
         var currentFileData, jsonData, combinedData, combinedDataJson, error_1, combinedDataJson;
@@ -113,7 +109,9 @@ function authorizeSpotify() {
                 case 3:
                     data = _a.sent();
                     return [2 /*return*/, data];
-                case 4: throw new Error("Response not OK");
+                case 4:
+                    console.log("process.env.CLIENT_ID ", process.env.CLIENT_ID);
+                    throw new Error("Response not OK");
                 case 5: return [3 /*break*/, 7];
                 case 6:
                     e_1 = _a.sent();
@@ -126,7 +124,7 @@ function authorizeSpotify() {
 }
 var getArtistsAlbums = function (_a) {
     var access_token = _a.access_token, artist_spotify_id = _a.artist_spotify_id, include_groups = _a.include_groups, _b = _a.limit, limit = _b === void 0 ? 50 : _b, _c = _a.offset, offset = _c === void 0 ? 0 : _c;
-    return __awaiter(_this, void 0, void 0, function () {
+    return __awaiter(void 0, void 0, void 0, function () {
         var GET_ARTIST_ALBUM_ENDPOINT, response, data, e_2;
         return __generator(this, function (_d) {
             switch (_d.label) {
@@ -159,7 +157,7 @@ var getArtistsAlbums = function (_a) {
 };
 var getAlbumTracks = function (_a) {
     var access_token = _a.access_token, album_id = _a.album_id, _b = _a.market, market = _b === void 0 ? 'US' : _b, _c = _a.limit, limit = _c === void 0 ? 50 : _c, _d = _a.offset, offset = _d === void 0 ? 0 : _d;
-    return __awaiter(_this, void 0, void 0, function () {
+    return __awaiter(void 0, void 0, void 0, function () {
         var GET_ALBUM_TRACKS_ENDPOINT, response, data, e_3;
         return __generator(this, function (_e) {
             switch (_e.label) {
@@ -192,13 +190,27 @@ var getAlbumTracks = function (_a) {
 };
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var authorizationResult;
+        var authorizationResult, getArtistAlbum;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, authorizeSpotify()];
                 case 1:
                     authorizationResult = _a.sent();
-                    console.log("authorization_result = ", authorizationResult);
+                    if (!!authorizationResult) return [3 /*break*/, 2];
+                    console.error("Authorization failed");
+                    return [2 /*return*/];
+                case 2: return [4 /*yield*/, getArtistsAlbums({
+                        access_token: authorizationResult.access_token,
+                        artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
+                        include_groups: INCLUDE_GROUPS[0],
+                        limit: LIMIT,
+                        offset: OFFSET,
+                    })];
+                case 3:
+                    getArtistAlbum = _a.sent();
+                    _a.label = 4;
+                case 4:
+                    console.log("getArtistAlbum = \n", getArtistAlbum);
                     return [2 /*return*/];
             }
         });
