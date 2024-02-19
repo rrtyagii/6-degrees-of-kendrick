@@ -53,7 +53,7 @@ var LIMIT = 50;
 var OFFSET = 0;
 function appendOrCreateJSONFile(filename, data) {
     return __awaiter(this, void 0, void 0, function () {
-        var currentFileData, jsonData, combinedData, combinedDataJson, error_1, combinedDataJson;
+        var currentFileData, existingData, existingIds_1, uniqueNewData, combinedData, combinedDataJson, error_1, combinedDataJson;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -61,8 +61,14 @@ function appendOrCreateJSONFile(filename, data) {
                     return [4 /*yield*/, fs.promises.readFile(filename, "utf-8")];
                 case 1:
                     currentFileData = _a.sent();
-                    jsonData = JSON.parse(currentFileData);
-                    combinedData = __spreadArray(__spreadArray([], jsonData, true), data, true);
+                    existingData = JSON.parse(currentFileData);
+                    existingIds_1 = new Set(existingData.map(function (item) { return item.id; }));
+                    uniqueNewData = data.filter(function (item) { return !existingIds_1.has(item.id); });
+                    if (uniqueNewData.length === 0) {
+                        console.log('No unique data to append. No changes made to the file.');
+                        return [2 /*return*/];
+                    }
+                    combinedData = __spreadArray(__spreadArray([], existingData, true), uniqueNewData, true);
                     combinedDataJson = JSON.stringify(combinedData, null, 2);
                     return [4 /*yield*/, fs.promises.writeFile(filename, combinedDataJson)];
                 case 2:
@@ -190,7 +196,7 @@ var getAlbumTracks = function (_a) {
 };
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var authorizationResult, getArtistAlbum;
+        var authorizationResult, getArtistAlbum, items, id, albumData, i, j, album_object;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, authorizeSpotify()];
@@ -210,7 +216,42 @@ function main() {
                     getArtistAlbum = _a.sent();
                     _a.label = 4;
                 case 4:
-                    console.log("getArtistAlbum = \n", getArtistAlbum);
+                    items = getArtistAlbum["items"];
+                    id = 0;
+                    albumData = [];
+                    i = 0;
+                    _a.label = 5;
+                case 5:
+                    if (!(i < items.length)) return [3 /*break*/, 10];
+                    j = 0;
+                    _a.label = 6;
+                case 6:
+                    if (!(j < items[i]['artists'].length)) return [3 /*break*/, 9];
+                    album_object = {
+                        "id": "".concat(++id),
+                        "name": items[i]['name'],
+                        "artist": {
+                            'spotify_id': items[i]['artists'][j]['id'],
+                            'name': items[i]['artists'][j]['name']
+                        },
+                        "spotify_id": items[i]['id'],
+                        "total_tracks": items[i]['total_tracks'],
+                        "album_group": items[i]['album_group'],
+                        "album_type": items[i]['album_type'],
+                    };
+                    albumData.push((album_object));
+                    return [4 /*yield*/, appendOrCreateJSONFile("albumData.json", albumData)];
+                case 7:
+                    _a.sent();
+                    _a.label = 8;
+                case 8:
+                    j++;
+                    return [3 /*break*/, 6];
+                case 9:
+                    i++;
+                    return [3 /*break*/, 5];
+                case 10:
+                    ;
                     return [2 /*return*/];
             }
         });

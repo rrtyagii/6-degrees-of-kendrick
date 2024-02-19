@@ -18,11 +18,23 @@ type authorizeSpotify ={
 async function appendOrCreateJSONFile(filename: string, data: any){
     try{    
         const currentFileData = await fs.promises.readFile(filename, "utf-8");
-        const jsonData = JSON.parse(currentFileData);
-        const combinedData = [...jsonData, ...data];
+        const existingData = JSON.parse(currentFileData);
+
+        const existingIds = new Set(existingData.map((item: any) => item.id));
+        const uniqueNewData = data.filter((item:any) => !existingIds.has(item.id));
+
+        if (uniqueNewData.length === 0) {
+            console.log('No unique data to append. No changes made to the file.');
+            return;
+        }
+
+        const combinedData = [...existingData, ...uniqueNewData];
         const combinedDataJson = JSON.stringify(combinedData, null, 2);
+
         await fs.promises.writeFile(filename, combinedDataJson);
+
         console.log("File updated successfully");
+        
     } catch (error: any){
         if(error.code === "ENOENT"){
             console.log("File not found");
@@ -101,7 +113,9 @@ const getAlbumTracks = async ( {access_token, album_id, market='US', limit=50, o
 
 async function main() {
     const authorizationResult = await authorizeSpotify();
+
     let getArtistAlbum;
+
     if(!authorizationResult){
         console.error("Authorization failed");
         return;
@@ -114,7 +128,29 @@ async function main() {
             offset: OFFSET,
         });
     }
-   console.log("getArtistAlbum = \n", getArtistAlbum);
+    const items = getArtistAlbum["items"];
+    let id = 0;
+
+    const albumData = [];
+
+    for(let i=0; i<items.length; i++){
+        for(let j=0; j<items[i]['artists'].length ;j++){
+            const album_object = {
+                "id":`${++id}`,
+                "name":items[i]['name'],
+                "artist" : {
+                    'spotify_id' : items[i]['artists'][j]['id'],
+                    'name' : items[i]['artists'][j]['name']
+                },
+                "spotify_id": items[i]['id'],
+                "total_tracks": items[i]['total_tracks'],
+                "album_group":items[i]['album_group'],
+                "album_type":items[i]['album_type'],
+            }
+            albumData.push((album_object));
+            await appendOrCreateJSONFile("albumData.json", albumData);
+        }
+    };
 }
 
 main();
