@@ -51,17 +51,43 @@ var ALBUM_ID = "";
 var INCLUDE_GROUPS = ["album", "single", "appears_on", "compilation"];
 var LIMIT = 50;
 var OFFSET = 0;
+function readFile(filename) {
+    return __awaiter(this, void 0, void 0, function () {
+        var filedata, existingData, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, fs.promises.readFile(filename, "utf-8")];
+                case 1:
+                    filedata = _a.sent();
+                    existingData = JSON.parse(filedata);
+                    console.log("File read successfully");
+                    return [2 /*return*/, existingData];
+                case 2:
+                    error_1 = _a.sent();
+                    if (error_1.code === "ENOENT") {
+                        console.log("File not found");
+                    }
+                    else {
+                        console.error('An error occurred:', error_1);
+                    }
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
 function appendOrCreateJSONFile(filename, data) {
     return __awaiter(this, void 0, void 0, function () {
-        var currentFileData, existingData, existingIds_1, uniqueNewData, combinedData, combinedDataJson, error_1, combinedDataJson;
+        var existingData, existingIds_1, uniqueNewData, combinedData, combinedDataJson, error_2, combinedDataJson;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 3, , 7]);
-                    return [4 /*yield*/, fs.promises.readFile(filename, "utf-8")];
+                    return [4 /*yield*/, readFile(filename)];
                 case 1:
-                    currentFileData = _a.sent();
-                    existingData = JSON.parse(currentFileData);
+                    existingData = _a.sent();
                     existingIds_1 = new Set(existingData.map(function (item) { return item.id; }));
                     uniqueNewData = data.filter(function (item) { return !existingIds_1.has(item.id); });
                     if (uniqueNewData.length === 0) {
@@ -76,8 +102,8 @@ function appendOrCreateJSONFile(filename, data) {
                     console.log("File updated successfully");
                     return [3 /*break*/, 7];
                 case 3:
-                    error_1 = _a.sent();
-                    if (!(error_1.code === "ENOENT")) return [3 /*break*/, 5];
+                    error_2 = _a.sent();
+                    if (!(error_2.code === "ENOENT")) return [3 /*break*/, 5];
                     console.log("File not found");
                     combinedDataJson = JSON.stringify(data, null, 2);
                     return [4 /*yield*/, fs.promises.writeFile(filename, combinedDataJson)];
@@ -86,7 +112,7 @@ function appendOrCreateJSONFile(filename, data) {
                     console.log("File created successfully");
                     return [3 /*break*/, 6];
                 case 5:
-                    console.error('An error occurred:', error_1);
+                    console.error('An error occurred:', error_2);
                     _a.label = 6;
                 case 6: return [3 /*break*/, 7];
                 case 7: return [2 /*return*/];
@@ -196,65 +222,55 @@ var getAlbumTracks = function (_a) {
 };
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var authorizationResult, getArtistAlbum, items, id, albumData, i, j, album_object;
+        var authorizationResult, albums, album_ids;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, authorizeSpotify()];
                 case 1:
                     authorizationResult = _a.sent();
-                    if (!!authorizationResult) return [3 /*break*/, 2];
-                    console.error("Authorization failed");
-                    return [2 /*return*/];
-                case 2: return [4 /*yield*/, getArtistsAlbums({
-                        access_token: authorizationResult.access_token,
-                        artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
-                        include_groups: INCLUDE_GROUPS[0],
-                        limit: LIMIT,
-                        offset: OFFSET,
-                    })];
-                case 3:
-                    getArtistAlbum = _a.sent();
-                    _a.label = 4;
-                case 4:
-                    items = getArtistAlbum["items"];
-                    id = 0;
-                    albumData = [];
-                    i = 0;
-                    _a.label = 5;
-                case 5:
-                    if (!(i < items.length)) return [3 /*break*/, 10];
-                    j = 0;
-                    _a.label = 6;
-                case 6:
-                    if (!(j < items[i]['artists'].length)) return [3 /*break*/, 9];
-                    album_object = {
-                        "id": "".concat(++id),
-                        "name": items[i]['name'],
-                        "artist": {
-                            'spotify_id': items[i]['artists'][j]['id'],
-                            'name': items[i]['artists'][j]['name']
-                        },
-                        "spotify_id": items[i]['id'],
-                        "total_tracks": items[i]['total_tracks'],
-                        "album_group": items[i]['album_group'],
-                        "album_type": items[i]['album_type'],
-                    };
-                    albumData.push((album_object));
-                    return [4 /*yield*/, appendOrCreateJSONFile("albumData.json", albumData)];
-                case 7:
-                    _a.sent();
-                    _a.label = 8;
-                case 8:
-                    j++;
-                    return [3 /*break*/, 6];
-                case 9:
-                    i++;
-                    return [3 /*break*/, 5];
-                case 10:
-                    ;
+                    return [4 /*yield*/, readFile("albumData.json")];
+                case 2:
+                    albums = _a.sent();
+                    album_ids = albums.map(function (album) { return album.spotify_id; });
+                    console.log("album_ids", album_ids);
                     return [2 /*return*/];
             }
         });
     });
 }
+//     let getArtistAlbum;
+//     if(!authorizationResult){
+//         console.error("Authorization failed");
+//         return;
+//     } else{
+//         getArtistAlbum = await getArtistsAlbums({
+//             access_token: authorizationResult.access_token,
+//             artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
+//             include_groups: INCLUDE_GROUPS[1],
+//             limit: LIMIT,
+//             offset: OFFSET,
+//         });
+//     }
+//     const items = getArtistAlbum["items"];
+//     let id = 0;
+//     const albumData = [];
+//     for(let i=0; i<items.length; i++){
+//         for(let j=0; j<items[i]['artists'].length ;j++){
+//             const album_object = {
+//                 "id":`${++id}`,
+//                 "name":items[i]['name'],
+//                 "artist" : {
+//                     'spotify_id' : items[i]['artists'][j]['id'],
+//                     'name' : items[i]['artists'][j]['name']
+//                 },
+//                 "spotify_id": items[i]['id'],
+//                 "total_tracks": items[i]['total_tracks'],
+//                 "album_group":items[i]['album_group'],
+//                 "album_type":items[i]['album_type'],
+//             }
+//             albumData.push((album_object));
+//         }
+//     };
+//     await appendOrCreateJSONFile("albumData.json", albumData);
+// }
 main();

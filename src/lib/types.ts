@@ -46,3 +46,9 @@ export type getAristAlbumParams = {
     limit?: number,
     offset?: number
 };
+
+export type authorizeSpotify ={
+    token_type: string,
+    access_token: string,
+    expires_in: number
+};

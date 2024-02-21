@@ -1,7 +1,9 @@
-//node --env-file=../../.env spotify.js
-import { getAlbumTrackParams, getAristAlbumParams } from "./types";
+import fs from "fs";
+import dotenv from "dotenv";
+import { getAlbumTrackParams, getAristAlbumParams, authorizeSpotify} from "./types";
 
-const fs = require("fs");
+dotenv.config();
+
 const KENDRICK_LAMAR_SPOTIFY_ID = "2YZyLoL8N0Wb9xBt1NhZWg";
 const ALBUM_ID = "";
 
@@ -9,16 +11,24 @@ const INCLUDE_GROUPS = ["album", "single", "appears_on", "compilation"];
 const LIMIT = 50;
 const OFFSET = 0;
 
-type authorizeSpotify ={
-    token_type: string,
-    access_token: string,
-    expires_in: number
-};
+async function readFile(filename:string){
+    try{
+        const filedata = await fs.promises.readFile(filename, "utf-8");
+        const existingData = JSON.parse(filedata);
+        console.log("File read successfully");
+        return existingData;
+    } catch (error: any){
+        if(error.code === "ENOENT"){
+            console.log("File not found");
+        } else{
+            console.error('An error occurred:', error);
+        }
+    }
+} 
 
 async function appendOrCreateJSONFile(filename: string, data: any){
     try{    
-        const currentFileData = await fs.promises.readFile(filename, "utf-8");
-        const existingData = JSON.parse(currentFileData);
+        const existingData = await readFile(filename)
 
         const existingIds = new Set(existingData.map((item: any) => item.id));
         const uniqueNewData = data.filter((item:any) => !existingIds.has(item.id));
@@ -34,7 +44,7 @@ async function appendOrCreateJSONFile(filename: string, data: any){
         await fs.promises.writeFile(filename, combinedDataJson);
 
         console.log("File updated successfully");
-        
+
     } catch (error: any){
         if(error.code === "ENOENT"){
             console.log("File not found");
@@ -113,44 +123,63 @@ const getAlbumTracks = async ( {access_token, album_id, market='US', limit=50, o
 
 async function main() {
     const authorizationResult = await authorizeSpotify();
+    const albums = await readFile("albumData.json");
 
-    let getArtistAlbum;
+    let album_ids = albums.map((album: any) => album.spotify_id);
+    
+    let album_tracks = [];
 
     if(!authorizationResult){
         console.error("Authorization failed");
         return;
     } else{
-        getArtistAlbum = await getArtistsAlbums({
-            access_token: authorizationResult.access_token,
-            artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
-            include_groups: INCLUDE_GROUPS[0],
-            limit: LIMIT,
-            offset: OFFSET,
+        album_ids.forEach(async (id:string)=> {
+            const response = await getAlbumTracks({access_token: authorizationResult?.access_token || '', album_id: id});
         });
+
+        //TODO: get tracks from each album; append to album_tracks; write to file
+        
+        // make a queue, if a track contains multiple artists, add the artist who is not kendrick lamar to the queue and get their albums and then their tracks.
     }
-    const items = getArtistAlbum["items"];
-    let id = 0;
 
-    const albumData = [];
-
-    for(let i=0; i<items.length; i++){
-        for(let j=0; j<items[i]['artists'].length ;j++){
-            const album_object = {
-                "id":`${++id}`,
-                "name":items[i]['name'],
-                "artist" : {
-                    'spotify_id' : items[i]['artists'][j]['id'],
-                    'name' : items[i]['artists'][j]['name']
-                },
-                "spotify_id": items[i]['id'],
-                "total_tracks": items[i]['total_tracks'],
-                "album_group":items[i]['album_group'],
-                "album_type":items[i]['album_type'],
-            }
-            albumData.push((album_object));
-            await appendOrCreateJSONFile("albumData.json", albumData);
-        }
-    };
 }
+//     let getArtistAlbum;
+
+//     if(!authorizationResult){
+//         console.error("Authorization failed");
+//         return;
+//     } else{
+//         getArtistAlbum = await getArtistsAlbums({
+//             access_token: authorizationResult.access_token,
+//             artist_spotify_id: KENDRICK_LAMAR_SPOTIFY_ID,
+//             include_groups: INCLUDE_GROUPS[1],
+//             limit: LIMIT,
+//             offset: OFFSET,
+//         });
+//     }
+//     const items = getArtistAlbum["items"];
+//     let id = 0;
+
+//     const albumData = [];
+
+//     for(let i=0; i<items.length; i++){
+//         for(let j=0; j<items[i]['artists'].length ;j++){
+//             const album_object = {
+//                 "id":`${++id}`,
+//                 "name":items[i]['name'],
+//                 "artist" : {
+//                     'spotify_id' : items[i]['artists'][j]['id'],
+//                     'name' : items[i]['artists'][j]['name']
+//                 },
+//                 "spotify_id": items[i]['id'],
+//                 "total_tracks": items[i]['total_tracks'],
+//                 "album_group":items[i]['album_group'],
+//                 "album_type":items[i]['album_type'],
+//             }
+//             albumData.push((album_object));
+//         }
+//     };
+//     await appendOrCreateJSONFile("albumData.json", albumData);
+// }
 
 main();
