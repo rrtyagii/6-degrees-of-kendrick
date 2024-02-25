@@ -34,7 +34,7 @@ yarn-error.log*
 .vercel
 
 # data json file
-albumData.json
+src/lib/*.json
 
 # typescript
 *.tsbuildinfo

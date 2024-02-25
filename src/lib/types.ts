@@ -1,8 +1,6 @@
 export type ArtistDataType = {
-    id?: number,
-    name: string,
     spotify_id: string,
-    popularity?: number,
+    name: string,
 };
 
 export type AlbumDataType = {
@@ -15,20 +13,10 @@ export type AlbumDataType = {
 };
 
 export type TrackDataType={
-    id: number,
-    name: string,
-    AlbumId: AlbumDataType,
-    AristId: ArtistDataType,
-    preview_url: string,
     spotify_id: string,
-    artist_track_data: ArtistTrackDataType,
-};
-
-export type ArtistTrackDataType={
-    id: number,
-    artist_id : ArtistDataType,
-    track_id : TrackDataType,
-    role: string,
+    name: string,
+    preview_url: string, 
+    artist_track_data?: ArtistDataType,
 };
 
 export type getAlbumTrackParams ={
