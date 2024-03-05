@@ -1,26 +1,34 @@
-import { SpotifyApi, TopTracksResult } from "@spotify/web-api-ts-sdk";
+import dotenv from "dotenv";
+import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import fs from "fs";
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "./database.types";
 
-const KENDRICK_LAMAR_SPOTIFY_ID = "2YZyLoL8N0Wb9xBt1NhZWg";
-const INCLUDE_GROUPS = ["album", "single", "appears_on", "compilation"];
-const LIMIT = 50;
-const OFFSET = 0;
+dotenv.config({ path: "../../.env" });
 
-let ARTIST_DATABASE: any = [];
-let TRACK_DATABASE: any = [];
-let ARTIST_TRACK_JOIN_TABEL:any = [];
-let artist_queue = [ KENDRICK_LAMAR_SPOTIFY_ID ];
+const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SUPABASE_URL, SUPABASE_KEY] = 
+    ['CLIENT_ID', 'CLIENT_SECRET', 'SUPABASE_URL', 'SUPABASE_KEY'].map(key => {
+        const value = process.env[key];
+        if (!value) throw new Error(`${key} is not set`);
+        return value;
+    });
 
-async function appendOrCreateJSONFile(filename: string, data: any){
+const spotifyApi = SpotifyApi.withClientCredentials(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET); 
+const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
+const CHUNK_SIZE = 50;
+
+const readFileAsJson = async (filename:string) => {
+    const data = await fs.promises.readFile(filename, "utf-8");
+    return JSON.parse(data);
+};
+
+const appendOrCreateJSONFile = async(filename: string, data: any) => {
     try{    
-        const currentFileData = await fs.promises.readFile(filename, "utf-8");
-        const existingData = JSON.parse(currentFileData);
-
+        const existingData = await readFileAsJson(filename);
         const existingIds = new Set(existingData.map((item: any) => item.id));
         const uniqueNewData = data.filter((item:any) => !existingIds.has(item.id));
 
         if (uniqueNewData.length === 0) {
-            //console.log('No unique data to append. No changes made to the file.');
             return;
         }
 
@@ -28,8 +36,6 @@ async function appendOrCreateJSONFile(filename: string, data: any){
         const combinedDataJson = JSON.stringify(combinedData, null, 2);
 
         await fs.promises.writeFile(filename, combinedDataJson);
-
-        //console.log("File updated successfully");
 
     } catch (error: any){
         if(error.code === "ENOENT"){
@@ -43,81 +49,128 @@ async function appendOrCreateJSONFile(filename: string, data: any){
     }
 }
 
-const spotifyApi = SpotifyApi.withClientCredentials(
-    process.env.CLIENT_ID,
-    process.env.CLIENT_SECRET
-);
+const insertIntoArtistTable = async(name:string, spotify_id:string, popularity:number) => {
+    const {data, error} = await supabase.from("Artist").insert([{
+        name: name,
+        spotify_id: spotify_id,
+        popularity: popularity,
+    }]);
 
-let tryCount = 1000;
-let artistCounter = 0;
-let trackCounter = 0;
+    if(error){
+        console.error("error insertIntoArtistTable\n", error);
+    }
 
-// Get artist songs
-// if song has more than one artist:
-//     add new artist to queue
-//     update database
-
-while(artist_queue.length > 0 && tryCount > 0){
-    const artist_id : any = artist_queue.shift();
-    const artist_top_tracks = await spotifyApi.artists.topTracks(artist_id, "US");
-    const tracks = artist_top_tracks.tracks;
-
-    for(let i = 0; i < tracks.length; i++){
-        const track = tracks[i];
-        const artists = track.artists;
-
-        if(artists.length > 1){
-            for(let j = 0; j < artists.length; j++){
-                
-                const artist = artists[j];
-                
-                const artist_object = {
-                    name: artist.name,
-                    spotify_id: artist.id,
-                    track_with_kendrick_name: track.name,
-                    track_with_kendrick_id: track.id,
-                };
-
-                if(!artist_queue.includes(artist.id) && artist_id !== artist.id){
-                    artist_queue.push(artist.id);
-                }
-                
-                if (!ARTIST_DATABASE.some((existingArtist: any) => existingArtist.spotify_id === artist_object.spotify_id)) {
-                    ARTIST_DATABASE.push({
-                        name: artist.name,
-                        spotify_id: artist.id,
-                        uri: artist.external_urls.spotify
-                    });
-                    artistCounter++;
-                }
-
-                if (artist.id !== KENDRICK_LAMAR_SPOTIFY_ID && !ARTIST_TRACK_JOIN_TABEL.some((existing:any) => existing.spotify_id === artist.id)) {
-                    ARTIST_TRACK_JOIN_TABEL.push({
-                        name: artist.name,
-                        spotify_id: artist.id,
-                        track_with_kendrick_name: track.name,
-                        track_with_kendrick_id: track.id,
-                    });
-                }
-            } 
-        }
-
-        if(!TRACK_DATABASE.some((existtingTrack:any) => existtingTrack.spotify_id === track.id)){
-            TRACK_DATABASE.push({
-                name: track.name,
-                spotify_id: track.id,
-                spotify_url: track.external_urls.spotify,
-                preview_url: track.preview_url,
-            });
-            trackCounter++;
-        };
-    };
-    console.log("tryCount: ", tryCount);
-    tryCount--;
+    if(data){
+        console.log("inserted successfully");
+    }
 };
 
-console.log(`Processed ${artistCounter} artists and ${trackCounter} tracks.`);
+const getArtistFromArtistTable = async(spotify_id:string) => {
+    const {data, error} = await supabase.from("Artist").select().eq("spotify_id", spotify_id);
 
-appendOrCreateJSONFile("artist_database.json", ARTIST_DATABASE);
-appendOrCreateJSONFile("artist_track_join_table.json", ARTIST_TRACK_JOIN_TABEL);
-appendOrCreateJSONFile("track_database.json", TRACK_DATABASE);
+    if(error){
+        console.error("error getArtistFromArtistTable\n", error);
+    }
+
+    if(data){
+        return data;
+    }
+}
+
+const insertIntoTracksTable = async(
+    name:string,
+    preview_url:string,
+    spotify_id:string,
+) =>{
+    const {data, error} = await supabase.from("Tracks").insert([{
+        name: name,
+        preview_url: preview_url,
+        spotify_id: spotify_id,
+    }]);
+
+    if(error){
+        console.error("error insertIntoTracksTable\n", error);
+    }
+    if(data){
+        console.log("inserted into Track successfully");
+    }
+}
+
+const getTrackFromTracksTable = async(spotify_id:string) => {
+    const {data, error} = await supabase.from("Tracks").select().eq("spotify_id", spotify_id);
+
+    if(error){
+        console.error("error getTrackFromTracksTable\n", error);
+    }
+
+    if(data){
+        return data;
+    }
+}
+
+const insertIntoArtist_TrackTable = async(
+    artist_id:any,
+    track_id:any,
+) =>{
+    const {data, error} = await supabase.from("Artist_Track").insert([{
+        artist_id: artist_id,
+        track_id: track_id,
+    }]);
+
+    if(error){
+        console.error("error in insertIntoArtist_TrackTable\n", error);
+    }
+    if(data){
+        console.log("inserted into Artist_Track successfully");
+    }
+}
+
+async function processArtists () {
+    const artists = await readFileAsJson("artist_database.json 01-55-02-501.json");
+    const ids_array = artists.map((artist:any) => artist.spotify_id);
+
+    for(let i=0; i<ids_array.length; i+=CHUNK_SIZE){
+        const chunk = ids_array.slice(i, i+CHUNK_SIZE);
+        const response:any = await spotifyApi.artists.get(chunk);
+
+        for( const artist of response){
+            await insertIntoArtistTable(artist.name, artist.id, artist.popularity);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log(`chunk finished: ${[i, i+CHUNK_SIZE]}`);
+    }
+}
+
+async function processTracks() {
+    const tracks = await readFileAsJson("track_database.json 01-55-02-561.json");
+    const trackIds = tracks.map((track:any) => track.spotify_id);
+  
+    for (let i = 0; i < trackIds.length; i += CHUNK_SIZE) {
+        const chunk = trackIds.slice(i, i + CHUNK_SIZE);
+        const response:any = await spotifyApi.tracks.get(chunk, "US");
+  
+        for (const track of response) {
+            const { name, id: trackSpotifyId, preview_url = "" } = track;
+            await insertIntoTracksTable(name, preview_url, trackSpotifyId);
+  
+            for (const artist of track.artists) {
+                const artistFromDb = await getArtistFromArtistTable(artist.id);
+                const artistId = artistFromDb? artistFromDb[0].id : "null";
+  
+                const trackFromDb = await getTrackFromTracksTable(trackSpotifyId);
+                const trackId = trackFromDb? trackFromDb[0].id : "null";
+  
+                await insertIntoArtist_TrackTable(artistId, trackId);
+            }
+        }
+  
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log(`Chunk finished: ${[i, i + CHUNK_SIZE]}`);
+    }
+}
+
+async function main(){
+    await processArtists();
+    await processTracks();
+}
