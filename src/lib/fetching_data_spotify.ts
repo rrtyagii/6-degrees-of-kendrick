@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import {SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
-import {readFileAsJson, getTop1000Artists} from "../lib/helper_functions";
+import {readFileAsJson, getTop1000Artists} from "./helper_functions";
 import fs from "fs";
 import { join } from "path";
 
@@ -28,13 +28,13 @@ let OFFSET = 0;
 // await fs.promises.writeFile("current_artist_tracks.json", JSON.stringify(currentArtist_Track, null, 2));
 
 //const tracks_to_add = await readFileAsJson("tracks_to_add.json");
-const currentArtists = await readFileAsJson("current_artists.json");
+const currentArtists = await readFileAsJson("../mocks/current_artists.json");
 const currentArtistSet = new Set();
 currentArtists.forEach((artist:any) => {
     currentArtistSet.add(artist.spotify_id);
 });
 
-const currentTracks = await readFileAsJson("current_tracks.json");
+const currentTracks = await readFileAsJson("../mocks/current_tracks.json");
 const currentTrackSet = new Set();
 currentTracks.forEach((track:any) => {
     currentTrackSet.add(track.spotify_id);
@@ -72,7 +72,7 @@ const getAllKendrickAlbums = async () => {
     }
 
     console.log("albums_to_fetch_tracks", albums_to_fetch_tracks);
-    await fs.promises.writeFile("albums_to_fetch_tracks_of.json", JSON.stringify(albums_to_fetch_tracks, null, 2));
+    await fs.promises.writeFile("../mocks/albums_to_fetch_tracks_of.json", JSON.stringify(albums_to_fetch_tracks, null, 2));
 };
 
 const getArtistAlbums = async (artistAlbumId:string) => {
@@ -101,7 +101,7 @@ const getArtistAlbums = async (artistAlbumId:string) => {
 };
 
 const getTracksOfAlbums = async () => {
-    const albumIds = await readFileAsJson("albums_to_fetch_tracks_of.json");
+    const albumIds = await readFileAsJson("../mocks/albums_to_fetch_tracks_of.json");
     let tracks_to_add: string[] = [];
     const LIMIT = 20;
 
@@ -118,7 +118,7 @@ const getTracksOfAlbums = async () => {
         }
 
     }
-    await fs.promises.writeFile("tracks_to_add.json", JSON.stringify(tracks_to_add, null, 2));
+    await fs.promises.writeFile("../mocks/tracks_to_add.json", JSON.stringify(tracks_to_add, null, 2));
 };
 
 
@@ -147,8 +147,8 @@ const getTracks = async ():Promise<void> => {
             }
         }
     }
-    await fs.promises.writeFile("artists_to_add.json", JSON.stringify(artists_to_add, null, 2));
-    await fs.promises.writeFile("tracks_to_add.json", JSON.stringify(tracks_to_add, null, 2));
+    await fs.promises.writeFile("../mocks/artists_to_add.json", JSON.stringify(artists_to_add, null, 2));
+    await fs.promises.writeFile("../mocks/tracks_to_add.json", JSON.stringify(tracks_to_add, null, 2));
 };
 
 //get all_albums of 1000 most popular artists in my current database.
@@ -178,7 +178,7 @@ async function getTop200ArtistsSpotifyIds(): Promise<void> {
 }
 
 const fetchArtistAlbums = async (): Promise<void> => {
-    let top1000ArtistsId = await readFileAsJson("Top_200_artists_spotifyIds.json");
+    let top1000ArtistsId = await readFileAsJson("../mocks/Top_200_artists_spotifyIds.json");
     let artistAlbums: string[] = [];
 
     for (let artistId of top1000ArtistsId) {
@@ -188,7 +188,7 @@ const fetchArtistAlbums = async (): Promise<void> => {
         await delay(600);
     }
 
-    await fs.promises.writeFile("top200_artist_albums_to_fetch_tracks_of.json", JSON.stringify(artistAlbums, null, 2));
+    await fs.promises.writeFile("../mocks/top200_artist_albums_to_fetch_tracks_of.json", JSON.stringify(artistAlbums, null, 2));
 };
 
 await fetchArtistAlbums();
