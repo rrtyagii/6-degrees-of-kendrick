@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
-import { Page, SimplifiedAlbum, SimplifiedArtist, SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
-import {readFileAsJson, getAllArtistFromArtistTable, getAllTracksFromTracksTable, getArtist_TrackFromArtist_TrackTable} from "../lib/helper_functions";
-import fs, { read } from "fs";
+import {SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
+import {readFileAsJson, getTop1000Artists} from "../lib/helper_functions";
+import fs from "fs";
+import { join } from "path";
 
 dotenv.config({ path: "../../.env" });
 
@@ -26,6 +27,7 @@ let OFFSET = 0;
 // await fs.promises.writeFile("current_tracks.json", JSON.stringify(currentTracks, null, 2));
 // await fs.promises.writeFile("current_artist_tracks.json", JSON.stringify(currentArtist_Track, null, 2));
 
+//const tracks_to_add = await readFileAsJson("tracks_to_add.json");
 const currentArtists = await readFileAsJson("current_artists.json");
 const currentArtistSet = new Set();
 currentArtists.forEach((artist:any) => {
@@ -47,15 +49,8 @@ function isTrackInCache(trackId: string): boolean {
     return currentTrackSet.has(trackId);
 }
 
-//methods to update artist and track cache
-function updateArtistCache(artist: any) {
-    currentArtistSet.add(artist.id);
-    console.log(`Artist added to cache: ${artist.name}`);
-}
-
-function updateTrackCache(track: any) {
-    currentTrackSet.add(track.id);
-    console.log(`Track added to cache: ${track.name}`);
+function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 const getAllKendrickAlbums = async () => {
@@ -80,6 +75,31 @@ const getAllKendrickAlbums = async () => {
     await fs.promises.writeFile("albums_to_fetch_tracks_of.json", JSON.stringify(albums_to_fetch_tracks, null, 2));
 };
 
+const getArtistAlbums = async (artistAlbumId:string) => {
+    const includeGroups = "album,single,appears_on,compilation";
+    let albums_to_fetch_tracks: string[] = [];
+
+    let artistAlbumsTotal = (await spotifyApi.artists.albums(artistAlbumId, includeGroups, "US", LIMIT, 0)).total;
+
+    for (let i = 0; i < artistAlbumsTotal; i += LIMIT) {
+        const artistAlbums = await spotifyApi.artists.albums(artistAlbumId, includeGroups, "US", LIMIT, i);
+
+        for(let album of artistAlbums.items){
+
+            if(album.id !== "0LyfQWJT6nXafLPZqxe9Of" && (isTrackInCache(album.id) === false) && 
+            (albums_to_fetch_tracks.some((id) => id === album.id) === false)){
+                albums_to_fetch_tracks.push(album.id);
+            }
+
+        }
+
+        await delay(500);
+    }
+    return albums_to_fetch_tracks;
+    // console.log("albums_to_fetch_tracks", albums_to_fetch_tracks);
+    // await fs.promises.writeFile("albums_to_fetch_tracks_of.json", JSON.stringify(albums_to_fetch_tracks, null, 2));
+};
+
 const getTracksOfAlbums = async () => {
     const albumIds = await readFileAsJson("albums_to_fetch_tracks_of.json");
     let tracks_to_add: string[] = [];
@@ -88,7 +108,7 @@ const getTracksOfAlbums = async () => {
     for(let i=0; i<albumIds.length; i+=LIMIT){
         const chunk:string[] = albumIds.slice(i, i+LIMIT);
         const albumTracks = await spotifyApi.albums.get(chunk, "US");
-
+        
         for(let album of albumTracks){
             for(let track of album.tracks.items){
                 if(isTrackInCache(track.id) === false && tracks_to_add.some((id) => id === track.id) === false){
@@ -101,11 +121,11 @@ const getTracksOfAlbums = async () => {
     await fs.promises.writeFile("tracks_to_add.json", JSON.stringify(tracks_to_add, null, 2));
 };
 
-const tracks_to_add = await readFileAsJson("tracks_to_add.json");
 
-const getTracks = async () => {
+const getTracks = async ():Promise<void> => {
     const MAX_IDs = 50;
     let artists_to_add: string[] = [];
+    let tracks_to_add: string[] = [];
 
     for(let i=0; i<tracks_to_add.length; i+=MAX_IDs){
         const chunk:string[] = tracks_to_add.slice(i, i+MAX_IDs);
@@ -113,17 +133,62 @@ const getTracks = async () => {
         const tracks:Track[] = await spotifyApi.tracks.get(chunk, "US");
 
         for(let track of tracks){
+
             let artists = track.artists;
+
             for(let artist of artists){
                 if(isArtistInCache(artist.id) === false && artists_to_add.some((id) => id === artist.id) === false && artist.id !== "0LyfQWJT6nXafLPZqxe9Of"){
                     artists_to_add.push(artist.id);
                 }
             }
+
+            if(isTrackInCache(track.id) === false && tracks_to_add.some((id) => id === track.id) === false){
+                tracks_to_add.push(track.id);
+            }
         }
     }
     await fs.promises.writeFile("artists_to_add.json", JSON.stringify(artists_to_add, null, 2));
+    await fs.promises.writeFile("tracks_to_add.json", JSON.stringify(tracks_to_add, null, 2));
 };
-
 
 //get all_albums of 1000 most popular artists in my current database.
 // get the tracks of each album and get the artists, then update the remote database and the local cache (Set and json file in my case).
+
+async function getTop200ArtistsSpotifyIds(): Promise<void> {
+    const top1000Artists = await getTop1000Artists().then(async (response) => {
+        let topArtists = [];
+
+        if (response === undefined) {
+            console.log("No data found");
+        } else {
+            for (let artist of response) {
+                console.log("current artist")
+                if (artist.spotify_id != "2YZyLoL8N0Wb9xBt1NhZWg") {
+                    topArtists.push(artist.spotify_id);
+                }
+            }
+        }
+        return topArtists;
+    }).catch((error) => {
+        console.error("Error in top1000Artists\n", error);
+    });
+
+    await fs.promises.writeFile("Top_200_artists_spotifyIds.json", JSON.stringify(top1000Artists, null, 2));
+
+}
+
+const fetchArtistAlbums = async (): Promise<void> => {
+    let top1000ArtistsId = await readFileAsJson("Top_200_artists_spotifyIds.json");
+    let artistAlbums: string[] = [];
+
+    for (let artistId of top1000ArtistsId) {
+        console.log("current artist: ", artistId);
+        const albums = await getArtistAlbums(artistId);
+        artistAlbums.push(...albums);
+        await delay(600);
+    }
+
+    await fs.promises.writeFile("top200_artist_albums_to_fetch_tracks_of.json", JSON.stringify(artistAlbums, null, 2));
+};
+
+await fetchArtistAlbums();

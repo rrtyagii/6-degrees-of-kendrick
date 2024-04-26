@@ -196,3 +196,15 @@ export const getArtist_TrackFromtrack_artistView = async() => {
         return data;
     }
 }
+
+export const getTop1000Artists = async() => {
+    const {data, error} = await supabase.from("Artist").select().order("popularity", {ascending: false}).range(0, 200);
+
+    if(error){
+        console.error("error getting Top 1000 Artists\n", error);
+    }
+
+    if(data){
+        return data;
+    }
+}
