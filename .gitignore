@@ -40,4 +40,4 @@ src/lib/*.json
 *.tsbuildinfo
 next-env.d.ts
 
-/mocks/*.json/
+/mocks

@@ -1,10 +1,8 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
-
-import {readFileAsJson, insertIntoArtistTable, getArtistFromArtistTable, insertIntoTracksTable, getTrackFromTracksTable, insertIntoArtist_TrackTable, getAllArtistFromArtistTable, appendOrCreateJSONFile, getAllTracksFromTracksTable, getArtist_TrackFromArtist_TrackTable } from "./helper_functions";
-import { writeFile } from "fs/promises";
-
-dotenv.config({ path: "../../.env" });
+import {readFileAsJson, insertIntoArtistTable, getArtistFromArtistTable, insertIntoTracksTable, getTrackFromTracksTable, insertIntoArtist_TrackTable } from "./helper_functions";
 
 const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET] = 
     ['CLIENT_ID', 'CLIENT_SECRET'].map(key => {
@@ -13,6 +11,8 @@ const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET] =
         return value;
     }
 );
+// console.log("populate_database");
+// console.log(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
 
 const spotifyApi = SpotifyApi.withClientCredentials(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET); 
 const CHUNK_SIZE = 50;
@@ -69,7 +69,7 @@ async function processTracks() {
 }
 
 async function main(){
-    //await processArtists();
+    await processArtists();
     await processTracks();
 }
 

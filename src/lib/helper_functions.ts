@@ -1,23 +1,32 @@
 import dotenv from "dotenv";
-import { createClient } from "@supabase/supabase-js";
+dotenv.config();
+
+import { SupabaseClient, createClient } from "@supabase/supabase-js";
 import { Database } from "../types/database.types";
 import fs from "fs";
 
-dotenv.config({ path: "../../.env" });
+// console.log("helper_functions");
+let supabase : SupabaseClient<Database>; 
 
-const [SUPABASE_URL, SUPABASE_KEY] = 
-    ['SUPABASE_URL', 'SUPABASE_KEY'].map(key => {
-        const value = process.env[key];
-        if (!value) throw new Error(`${key} is not set`);
-        return value;
+try{
+    const SUPABASE_URL = process?.env?.SUPABASE_URL!;
+    const SUPABASE_KEY = process?.env?.SUPABASE_KEY!;
+    console.log(`SUPABASE_URL: ${SUPABASE_URL}\nSUPABASE_KEY: ${SUPABASE_KEY}`)
+    supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
+} catch(error : any){
+    console.error("helper_function -> error in getting environment variables\n", error);
+}
+
+export const readFileAsJson = async (filename: string) => {
+    try {
+        // console.log("Current working directory:", cwd());
+        // console.log("reading file: ", filename);
+        const data = await fs.promises.readFile(filename, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('An error occurred', error);
+        throw error;  // Propagate error to the caller
     }
-);
-
-const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
-
-export const readFileAsJson = async (filename:string) => {
-    const data = await fs.promises.readFile(filename, "utf-8");
-    return JSON.parse(data);
 };
 
 export const appendOrCreateJSONFile = async(filename: string, data: any) => {
@@ -208,3 +217,11 @@ export const getTop1000Artists = async() => {
         return data;
     }
 }
+
+const getRandomArtistName = async() =>{
+    const artists = await readFileAsJson("")
+    const randomIndex = Math.floor(Math.random() * artists.length);
+    return artists[randomIndex];
+}
+
+console.log("__dirname: ", __dirname);
