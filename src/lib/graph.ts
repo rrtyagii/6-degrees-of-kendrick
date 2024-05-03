@@ -1,49 +1,48 @@
-import dotenv from "dotenv";
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "../types/database.types";
-import {getArtistFromArtistTableById, getAllArtistFromArtistTable, getArtist_TrackFromtrack_artistView, getTrackFromTracksTable} from "./helper_functions";
-import { writeFile, readFile } from "fs";
+import path from "path";
+import {readFileAsJson} from "./helper_functions";
 
-dotenv.config({ path: "../../.env" });
-
-const [SUPABASE_URL, SUPABASE_KEY] = 
-    ['SUPABASE_URL', 'SUPABASE_KEY'].map(key => {
-        const value = process.env[key];
-        if (!value) throw new Error(`${key} is not set`);
-        return value;
-    });
-
-const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
-
-class ArtistNode {
+type TrackInfo = {
+    id: string;
     name: string;
-    connections: ArtistNode[];
+    spotify_id: string;
+    preview_url: string;
+    number_id: number;
+}
+
+interface ArtistInfo {
+    id: number,
+    name: string,
+    spotify_id: string,
+    popularity: number,
+}
+
+type Connection = {
+    artist: string;
+    tracks: TrackInfo[];
+};
+
+export class ArtistNode {
+    name: string;
+    connections: Map<string, TrackInfo[]>;
 
     constructor(name: string) {
         this.name = name;
-        this.connections = [];
+        this.connections = new Map();
     }
-
-    addAdjacent(node: ArtistNode) {
-        if (!this.isAdjacent(node)) {
-            this.connections.push(node);
+    
+    addConnection(node: ArtistNode, track: TrackInfo) {
+        if (!this.connections.has(node.name)) {
+            this.connections.set(node.name, []);
         }
+        this.connections.get(node.name)!.push(track);
     }
-
-    removeAdjacent(node: ArtistNode) {
-        const index = this.connections.indexOf(node);
-        if (index > -1) {
-            this.connections.splice(index, 1);
-            return node;
-        }
-    }
-
-    getAdjacents() {
+    
+    getConnections(): Map<string, TrackInfo[]> {
         return this.connections;
     }
-
-    isAdjacent(node: ArtistNode) {
-        return this.connections.indexOf(node) > -1;
+    
+    isAdjacent(node: ArtistNode): boolean {
+        return this.connections.has(node.name);
     }
 }
 
@@ -54,158 +53,178 @@ export class Graph {
         this.nodes = new Map();
     }
 
-    addNode(name: string) {
-        if (!this.nodes.has(name)) {
-            const vertex = new ArtistNode(name);
-            this.nodes.set(name, vertex);
-            return vertex;
-        } else {
-            return this.nodes.get(name);
+    addNode(name: string): ArtistNode {
+        let node = this.nodes.get(name);
+        if (!node) {
+            node = new ArtistNode(name);
+            this.nodes.set(name, node);
         }
+        return node;
     }
 
-    removeVertex(name: string) {
-        const vertex = this.nodes.get(name);
-        if (vertex) {
-            for (const node of this.nodes.values()) {
-                node.removeAdjacent(vertex);
-            }
-        }
-        this.nodes.delete(name);
-    }
-
-    addEdge(sourceName: string, destinationName: string) {
+    addEdge(sourceName: string, destinationName: string, track: TrackInfo) {
         const sourceNode = this.addNode(sourceName);
         const destinationNode = this.addNode(destinationName);
-
-        if (sourceNode && destinationNode) {
-            sourceNode.addAdjacent(destinationNode);
-            destinationNode.addAdjacent(sourceNode);
-        }
+        sourceNode.addConnection(destinationNode, track);
+        destinationNode.addConnection(sourceNode, track);
     }
 
-    removeEdge(sourceName: string, destinationName: string) {
-        const sourceNode = this.nodes.get(sourceName);
-        const destinationNode = this.nodes.get(destinationName);
-
-        if (sourceNode && destinationNode) {
-            sourceNode.removeAdjacent(destinationNode);
-            destinationNode.removeAdjacent(sourceNode);
-        }
-    }
-
-    getNode(name: string) : ArtistNode | undefined{
+    getNode(name: string): ArtistNode | undefined {
         return this.nodes.get(name);
     }
 
-    breadthFirstTraversal(endName: string): number | undefined {
+    breadthFirstTraversal(endName: string): { 
+        degree: number, 
+        path: { artist:string, track: TrackInfo} [] } | undefined {
+
         const start = this.getNode("Kendrick Lamar");
         const end = this.getNode(endName);
-
+    
         if (!start || !end) {
-            throw new Error('Start or end node not found');
+            return undefined; // Return undefined if either start or end node is not found
         }
+    
+        const visited = new Set<string>(); // Tracks visited nodes by name
 
-        if (start === end) {
-            return 0;
-        }
+        const queue: Array<{
+            node: ArtistNode; 
+            depth: number, 
+            path: { artist : string, track: TrackInfo} [] 
+        }> = [];
     
-        const visited = new Set<ArtistNode>(); // Tracks visited nodes
-        const queue: Array<{node: ArtistNode; depth: number}> = []; // Queue to manage nodes and their depth
-    
-        queue.push({ node: start, depth: 0 }); // Initialize queue with the start node
-        visited.add(start); // Mark start node as visited
+        queue.push({ 
+            node: start, 
+            depth: 0, 
+            path: []
+        });
+        visited.add(start.name);
     
         while (queue.length > 0) {
-            const { node, depth } = queue.shift()!; // Get the next node and its depth
-            console.log(`Visiting ${node.name} at depth ${depth}`);
-            
-            // Visit all adjacent nodes
-            for (const adjacent of node.getAdjacents()) {
-                if (adjacent === end) {
-                    // If the end node is found, return the current depth + 1
-                    return depth + 1;
-                }
+            const { node, depth, path } = queue.shift()!;
     
-                if (!visited.has(adjacent)) {
-                    // If this node hasn't been visited, add it to the queue
-                    queue.push({ node: adjacent, depth: depth + 1 });
-                    visited.add(adjacent); // Mark this node as visited
+            for (const [adjName, tracks] of node.getConnections()) {
+
+                const adjNode = this.getNode(adjName);
+                if(!adjNode) continue;
+
+                for(const track of tracks){
+                    const newPath = [...path, { artist: adjName, track: track }];
+                    if (adjNode === end) {
+                        return { degree: depth + 1, path: newPath };
+                    }
+                    if (!visited.has(adjName)) {
+                        visited.add(adjName);
+                        queue.push({ node: adjNode, depth: depth + 1, path: newPath });
+                    }
                 }
             }
         }
-        // If the end node is not found, return undefined or -1 based on your preference
-        return undefined;
+        return undefined; // Return undefined if no path is found
     }
     
     visualize() {
         for (let [key, value] of this.nodes) {
-            const adjacents = value.getAdjacents().map(node => node.name).join(', ');
-            console.log(`${key} --> [ ${adjacents} ]`);
+            const adjacents = Array.from(value.getConnections()).map(([nodeName, tracks]) => ({
+                artist: nodeName,
+                tracks: tracks.map(track => `${track.name} (URL: ${track.preview_url})`)
+            }));
+            console.log(`${key} -->`, adjacents.length > 0 ? adjacents : "No connections");
         }
     }
-
-    serialize(){
+    
+    serialize() {
         const nodes = [];
-        for(let [name, node] of this.nodes){
+        for (let [name, node] of this.nodes) {
             nodes.push({
                 name: name,
-                connections: node.getAdjacents().map(adjacent => adjacent.name)
+                connections: Array.from(node.getConnections()).map(([adjName, tracks]) => ({
+                    artist: adjName,
+                    tracks: tracks.map(track => ({name: track.name, spotifyId: track.spotify_id, previewUrl: track.preview_url}))
+                }))
             });
         }
         return JSON.stringify(nodes, null, 2);
     }
 }
 
-// function generatePairs(artistIds: number[] | null ): [number, number][] {
-//     let pairs: [number, number][] = [];
+export async function populate_graph(){
+    const graph = new Graph();
 
-//     artistIds?.forEach((id1, index1) => {
-//         artistIds?.slice(index1 + 1).forEach((id2) => {
-//             pairs.push([id1, id2]);
-//         });
-//     });
+    const trackToArtists = new Map<string, string[]>();
 
-//     return pairs;
-// }
+    const artistsData = await readFileAsJson('../mocks/current_artists.json');
+    const trackData = await readFileAsJson('../mocks/current_tracks.json');
+    const artistTrackData = await readFileAsJson("../mocks/current_artist_tracks.json");
 
-// const graph = new Graph();
-// const artistsData = await getAllArtistFromArtistTable();
-// const artistTrackView = await getArtist_TrackFromtrack_artistView();
+    if(artistsData === undefined || artistTrackData === undefined){
+        throw new Error("No data found");
+    }
 
-// if(artistsData === undefined || artistTrackView === undefined){
-//     throw new Error("No data found");
-// } else{
-//     for(const artistData of artistsData){
-//         if(artistData.name !== null){
-//             graph.addNode(artistData.name);
-//         }
-//     }
+    artistsData.forEach((artistData:any) => {
+        if(artistData.name !== null){
+            graph.addNode(artistData.name);
+        }
+    });
 
-//     for (const artistTrack of artistTrackView) {
-//         console.log("the length of artistTrack.artist_ids is: ", artistTrack.artist_ids?.length);
-//         console.log(artistTrack.artist_ids);
+    artistTrackData.forEach((artistTrack: any) => {
+        const trackId = artistTrack.track_id;  // Ensure this ID is correctly capturing from artistTrack
+        if(!trackToArtists.has(trackId)){
+            trackToArtists.set(trackId, []);
+        }
 
-//        if (artistTrack?.artist_ids !== null) {
-//             const pairs = generatePairs(artistTrack.artist_ids);
-//             for (const pair of pairs) {
-//                 const artist1 = await getArtistFromArtistTableById(pair[0]);
-//                 const artist2 = await getArtistFromArtistTableById(pair[1]);
-//                 if (artist1 !== undefined && artist2 !== undefined) {
-//                     graph.addEdge(artist1[0].name, artist2[0]?.name);
-//                 }
-//             }
-//         }
-//     }
-// }
+        const artists = trackToArtists.get(trackId);
+        artists?.push(artistTrack.artist_id);  // Confirm artist IDs are correctly added
+    });
 
-// const serialized_graph = graph.serialize();
+    trackToArtists.forEach((artists, trackId) => {
+        const trackInfo: TrackInfo | undefined = trackData.find((track:TrackInfo) => track.id === trackId);
+        if (!trackInfo) return;  // Confirm track information is found
 
-// writeFile("graph.json", serialized_graph, "utf-8", (err) => {
-//     if(err){
-//         console.log(err);
-//     } else{
-//         console.log("The file has been saved");
-//     }
-// });
+        const trackDetails:TrackInfo = {
+            id: trackInfo.id,
+            name: trackInfo.name,
+            spotify_id: trackInfo.spotify_id,
+            preview_url: trackInfo.preview_url,
+            number_id: trackInfo.number_id
+        };
 
+        // Nested loop to create edges between all artists in the same track
+        for (let i = 0; i < artists.length; i++) {
+            for (let j = i + 1; j < artists.length; j++) {
+                const artistName1 = artistsData.find((artist:any) => artist.id === artists[i])?.name;
+                const artistName2 = artistsData.find((artist:any) => artist.id === artists[j])?.name;
+                if (artistName1 && artistName2) {
+                    graph.addEdge(artistName1, artistName2, trackDetails);
+                }
+            }
+        }
+    });
+}
+
+export async function deserialize(): Promise<Graph> {
+    const filePath = path.join(__dirname, 'graph.json');
+
+    const data = await readFileAsJson(filePath);
+    const graph = new Graph();
+
+    data.forEach((nodeData: { name: string; connections: Connection[] }) => {
+        graph.addNode(nodeData.name);
+    });
+
+    data.forEach((nodeData: { name: string; connections: Connection[] }) => {
+        nodeData.connections.forEach(connection => {
+            connection.tracks.forEach((track: TrackInfo) => {
+                graph.addEdge(nodeData.name, connection.artist, track);
+            });
+        });
+    });
+    return graph;
+}
+
+export const searchDegreeOfSeparation = async(artistName: string) => {
+    const artistGraph = await deserialize();
+
+    const deg = artistGraph?.breadthFirstTraversal(artistName); 
+
+    return deg;
+}

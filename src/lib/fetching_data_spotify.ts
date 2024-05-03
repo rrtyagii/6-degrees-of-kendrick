@@ -1,17 +1,19 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import {SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
 import {readFileAsJson, getTop1000Artists} from "./helper_functions";
 import fs from "fs";
-import { join } from "path";
 
-dotenv.config({ path: "../../.env" });
-
+console.log("fetching_data_spotify");
 const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET] = 
     ['CLIENT_ID', 'CLIENT_SECRET'].map(key => {
         const value = process.env[key];
         if (!value) throw new Error(`${key} is not set`);
         return value;
 });
+console.log(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
+
 const spotifyApi = SpotifyApi.withClientCredentials(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET); 
 
 const LIMIT = 50;
