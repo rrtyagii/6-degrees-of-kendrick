@@ -1,10 +1,10 @@
-import dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 import express, { Request, Response } from "express";
 import cors from "cors";
-import { searchDegreeOfSeparation } from "@/lib/graph";
-import { readFileAsJson } from "@/lib/helper_functions";
+import { searchDegreeOfSeparation } from "./src/lib/graph";
+import { getRandomArtistName, postAutoComplete } from "./src/lib/helper_functions";
 
 const app = express();
 const port = 5050; 
@@ -33,18 +33,37 @@ app.post('/search', async (req: Request, res: Response) => {
 app.post('/random', async (req: Request, res: Response) => {
     try {
         // Assuming you have a function that can fetch random artist names
-        //const randomArtistName = await getRandomArtistName();
-        // if (randomArtistName) {
-        //     const degreeObject = await searchDegreeOfSeparation(randomArtistName);
-        //     res.status(200).send(degreeObject);
-        // } else {
-        //     throw new Error("Failed to fetch random artist");
-        // }
+        const randomArtistName = await getRandomArtistName();
+
+
+        if (randomArtistName) {
+            const degreeObject = await searchDegreeOfSeparation(randomArtistName.name);
+
+            res.status(200).send(degreeObject);
+        } else {
+            res.status(404).send();
+        }
     } catch (error : any) {
+        console.error("Error in /random", error);
         res.status(500).send({ error: error.message });
     }
 });
 
+app.get('/autocomplete', async (req: Request, res: Response) => {
+    const searchQuery = req.query.term; 
+    if(!searchQuery){
+        res.json([]);
+    }
+
+    try{
+        const autoCompleteData = await postAutoComplete(searchQuery);
+        const names = autoCompleteData.map(artist => artist.name);
+        res.json(names)
+    } catch (error) {
+        console.error('Error fetching autocomplete data:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server started at http://localhost:${port}`);

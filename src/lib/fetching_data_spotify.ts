@@ -1,18 +1,18 @@
-import dotenv from "dotenv";
-dotenv.config();
+import * as fs from 'fs';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 
 import {SpotifyApi, Track } from "@spotify/web-api-ts-sdk";
 import {readFileAsJson, getTop1000Artists} from "./helper_functions";
-import fs from "fs";
 
-console.log("fetching_data_spotify");
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET] = 
     ['CLIENT_ID', 'CLIENT_SECRET'].map(key => {
         const value = process.env[key];
-        if (!value) throw new Error(`${key} is not set`);
+        if (!value) throw new Error(`${key} is not set in ${__filename}`);
         return value;
 });
-console.log(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
 
 const spotifyApi = SpotifyApi.withClientCredentials(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET); 
 
@@ -72,8 +72,6 @@ const getAllKendrickAlbums = async () => {
         }
         OFFSET += LIMIT;
     }
-
-    console.log("albums_to_fetch_tracks", albums_to_fetch_tracks);
     await fs.promises.writeFile("../mocks/albums_to_fetch_tracks_of.json", JSON.stringify(albums_to_fetch_tracks, null, 2));
 };
 
@@ -158,14 +156,14 @@ const getTracks = async ():Promise<void> => {
 
 async function getTop200ArtistsSpotifyIds(): Promise<void> {
     const top1000Artists = await getTop1000Artists().then(async (response) => {
-        let topArtists = [];
+        let topArtists: string[] = []; // Define the type and initialize as an empty array
 
         if (response === undefined) {
             console.log("No data found");
         } else {
             for (let artist of response) {
                 console.log("current artist")
-                if (artist.spotify_id != "2YZyLoL8N0Wb9xBt1NhZWg") {
+                if (artist.spotify_id != "2YZyLoL8N0Wb9xBt1NhZWg" && artist.spotify_id) {
                     topArtists.push(artist.spotify_id);
                 }
             }
@@ -193,4 +191,4 @@ const fetchArtistAlbums = async (): Promise<void> => {
     await fs.promises.writeFile("../mocks/top200_artist_albums_to_fetch_tracks_of.json", JSON.stringify(artistAlbums, null, 2));
 };
 
-await fetchArtistAlbums();
+console.log("fetching data from spotify");

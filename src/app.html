@@ -30,24 +30,46 @@
 
         <form action="/search" method="post" id="search-form" class="w-2/5">
             <div class="flex items-end border-b border-teal-500 py-2 ">
-              <input 
-              id="artist" 
-              name="artist" 
-              class="appearance-none bg-transparent border-none w-full h-11 mr-3 py-1 px-2 leading-tight focus:outline-none" 
-              type="text" placeholder="Enter your favourite artist" aria-label="Artist Name" required>
+                <div class="relative">
+                    <input 
+                        id="artist" 
+                        name="artist" 
+                        class="appearance-none bg-transparent border-none w-full h-11 mr-3 py-1 px-2 leading-tight focus:outline-none" 
+                        type="text" 
+                        placeholder="Enter your favourite artist" 
+                        aria-label="Artist Name" 
+                        required
+                    >
+                    <div id="autocomplete-results" class="absolute z-10 w-full border shadow-md mt-1 hidden overflow-auto max-h-60"></div>
+                </div>
 
-              <button class="w-1/5 h-11 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
-                Search
-              </button>
+                <button class="w-1/5 h-11 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
+                    Search
+                </button>
             </div>
         </form>
 
-        <section class="">
-            <button class="h-16 w-56 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
+        <section class="/random">
+            <button id="random-button" class="h-16 w-56 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 text-sm border-4 text-white py-1 px-2 rounded" type="button">
                 <span>Random</span> 
                 <i class="fas fa-random"></i>
             </button>
         </section>
+
+        <footer>
+            <div class="flex justify-center space-x-4">
+                <a href="https://www.instagram.com/rish.jpeg" target="_blank">
+                    <i class="fab fa-instagram fa-2x"></i>
+                </a>
+                <a href="https://twitter.com/x_rishabhtyagi" target="_blank">
+                    <i class="fab fa-twitter fa-2x"></i>
+                </a>
+                <a href="https://github.com/rrtyagii" target="_blank">
+                    <i class="fab fa-github fa-2x"></i>
+                </a>
+            </div>
+            <p class="text-slate-400 mx-auto my-8 p-2">Made with <i class="fas fa-heart text-red-500"></i> by <a href="" >Rishabh</a>
+        </footer>
 
     </main>
 </body>

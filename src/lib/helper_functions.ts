@@ -1,31 +1,35 @@
-import dotenv from "dotenv";
-dotenv.config();
+import * as fs from 'fs';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 
-import { SupabaseClient, createClient } from "@supabase/supabase-js";
 import { Database } from "../types/database.types";
-import fs from "fs";
+import { SupabaseClient, createClient } from "@supabase/supabase-js";
 
-// console.log("helper_functions");
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 let supabase : SupabaseClient<Database>; 
+const [SUPABASE_URL, SUPABASE_KEY] = 
+    ['SUPABASE_URL', 'SUPABASE_KEY'].map(key => {
+        const value = process.env[key];
+        if (!value) throw new Error(`${key} is not set in ${__filename}`);
+        return value;
+    }
+);
 
 try{
-    const SUPABASE_URL = process?.env?.SUPABASE_URL!;
-    const SUPABASE_KEY = process?.env?.SUPABASE_KEY!;
-    console.log(`SUPABASE_URL: ${SUPABASE_URL}\nSUPABASE_KEY: ${SUPABASE_KEY}`)
     supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
 } catch(error : any){
-    console.error("helper_function -> error in getting environment variables\n", error);
+    console.error("helper_function -> error in setting up supabase\n", error);
+    throw error;
 }
 
 export const readFileAsJson = async (filename: string) => {
     try {
-        // console.log("Current working directory:", cwd());
-        // console.log("reading file: ", filename);
         const data = await fs.promises.readFile(filename, 'utf-8');
         return JSON.parse(data);
     } catch (error) {
         console.error('An error occurred', error);
-        throw error;  // Propagate error to the caller
+        throw error;
     }
 };
 
@@ -211,6 +215,7 @@ export const getTop1000Artists = async() => {
 
     if(error){
         console.error("error getting Top 1000 Artists\n", error);
+        throw error;
     }
 
     if(data){
@@ -218,10 +223,32 @@ export const getTop1000Artists = async() => {
     }
 }
 
-const getRandomArtistName = async() =>{
-    const artists = await readFileAsJson("")
-    const randomIndex = Math.floor(Math.random() * artists.length);
-    return artists[randomIndex];
-}
+export const getRandomArtistName = async() =>{
+    try{
+        const artists = await readFileAsJson(path.resolve(__dirname, '../mocks/current_artists.json'));
+        const randomIndex = Math.floor(Math.random() * artists.length);
+        return artists[randomIndex];
+    }
+    catch(error){
+        console.error("error in getRandomArtistName\n", error);
+        throw error;
+    }
+};
 
-console.log("__dirname: ", __dirname);
+export const postAutoComplete = async (searchQuery: any) => {
+    try {
+        const { data, error } = await supabase
+            .from("Artist")
+            .select()
+            .ilike("name", `%${searchQuery}%`);
+
+        if (error) {
+            throw new Error(`Error in postAutoComplete: ${error.message}`);
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error in postAutoComplete", error);
+        throw error;
+    }
+};

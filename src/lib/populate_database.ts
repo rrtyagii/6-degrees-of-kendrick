@@ -1,18 +1,18 @@
-import dotenv from "dotenv";
-dotenv.config();
+import * as path from 'path';
+import * as dotenv from 'dotenv';
 
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import {readFileAsJson, insertIntoArtistTable, getArtistFromArtistTable, insertIntoTracksTable, getTrackFromTracksTable, insertIntoArtist_TrackTable } from "./helper_functions";
 
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
 const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET] = 
     ['CLIENT_ID', 'CLIENT_SECRET'].map(key => {
         const value = process.env[key];
-        if (!value) throw new Error(`${key} is not set`);
+        if (!value) throw new Error(`${key} is not set in ${__filename}`);
         return value;
     }
 );
-// console.log("populate_database");
-// console.log(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET);
 
 const spotifyApi = SpotifyApi.withClientCredentials(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET); 
 const CHUNK_SIZE = 50;

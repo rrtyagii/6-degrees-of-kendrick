@@ -1,4 +1,5 @@
-import path from "path";
+import * as path from 'path';
+
 import {readFileAsJson} from "./helper_functions";
 
 type TrackInfo = {
@@ -75,16 +76,16 @@ export class Graph {
 
     breadthFirstTraversal(endName: string): { 
         degree: number, 
-        path: { artist:string, track: TrackInfo} [] } | undefined {
+        path: { artist: string, track: TrackInfo} [] } | undefined {
 
         const start = this.getNode("Kendrick Lamar");
         const end = this.getNode(endName);
     
         if (!start || !end) {
-            return undefined; // Return undefined if either start or end node is not found
+            return undefined;
         }
     
-        const visited = new Set<string>(); // Tracks visited nodes by name
+        const visited = new Set<string>();
 
         const queue: Array<{
             node: ArtistNode; 
@@ -107,19 +108,18 @@ export class Graph {
                 const adjNode = this.getNode(adjName);
                 if(!adjNode) continue;
 
-                for(const track of tracks){
-                    const newPath = [...path, { artist: adjName, track: track }];
-                    if (adjNode === end) {
-                        return { degree: depth + 1, path: newPath };
-                    }
-                    if (!visited.has(adjName)) {
-                        visited.add(adjName);
-                        queue.push({ node: adjNode, depth: depth + 1, path: newPath });
-                    }
+                const track = tracks[0];
+                const newPath = [...path, { artist: adjName, track: track }];
+                if (adjNode === end) {
+                    return { degree: depth + 1, path: newPath };
+                }
+                if (!visited.has(adjName)) {
+                    visited.add(adjName);
+                    queue.push({ node: adjNode, depth: depth + 1, path: newPath });
                 }
             }
         }
-        return undefined; // Return undefined if no path is found
+        return undefined;
     }
     
     visualize() {
