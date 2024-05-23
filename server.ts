@@ -7,7 +7,7 @@ import { searchDegreeOfSeparation } from "./src/lib/graph";
 import { getRandomArtistName, postAutoComplete } from "./src/lib/helper_functions";
 
 const app = express();
-const port = 5050; 
+const port = process.env.PORT || ""; 
 app.use(cors());
 app.use(express.json());
 
@@ -15,7 +15,7 @@ app.get('/', (req: Request, res: Response) => {
     res.send('Hello World!');
 });
 
-app.post('/search', async (req: Request, res: Response) => {
+app.post('/api/search', async (req: Request, res: Response) => {
     try{
         const body = req.body;
         const artistName = body.artist;
@@ -30,7 +30,7 @@ app.post('/search', async (req: Request, res: Response) => {
     }
 });
 
-app.post('/random', async (req: Request, res: Response) => {
+app.post('/api/random', async (req: Request, res: Response) => {
     try {
         // Assuming you have a function that can fetch random artist names
         const randomArtistName = await getRandomArtistName();
@@ -49,7 +49,7 @@ app.post('/random', async (req: Request, res: Response) => {
     }
 });
 
-app.get('/autocomplete', async (req: Request, res: Response) => {
+app.get('/api/autocomplete', async (req: Request, res: Response) => {
     const searchQuery = req.query.term; 
     if(!searchQuery){
         res.json([]);

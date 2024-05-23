@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "es2022",
     "module": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
-    "noEmit": true,
+    "noEmit": false,
     "outDir": "./build",
     "moduleResolution": "node",
     "resolveJsonModule": true,
