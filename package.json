@@ -6,7 +6,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev":"npx tailwindcss -i ./src/styles/styles.css -o ./src/styles/output.css --watch",
+    "dev":"npx tailwindcss -i ./src/styles/styles.css -o ./src/styles/output.css --watch && node ./build/server.js",
     "build": "esrun build",
     "start": "esrun start",
     "lint": "esrun lint",

@@ -5,6 +5,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { searchDegreeOfSeparation } from "./src/lib/graph";
 import { getRandomArtistName, postAutoComplete } from "./src/lib/helper_functions";
+import path from "path";
 
 const app = express();
 const port = process.env.PORT || ""; 
@@ -12,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World!');
+    res.sendFile(path.resolve(__dirname, './src/index.html'));
 });
 
 app.post('/api/search', async (req: Request, res: Response) => {
