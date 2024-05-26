@@ -2,7 +2,7 @@ document.getElementById('search-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
     const artistName = document.getElementById('artist').value;
-    fetch("http://localhost:5050/search", {
+    fetch("https://sixdegreesofkendrick.com/api/search", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -27,7 +27,7 @@ document.getElementById('search-form').addEventListener('submit', function(e) {
 document.getElementById('random-button').addEventListener('click', function(e) {
     e.preventDefault();
 
-    fetch("http://localhost:5050/random", {
+    fetch("https://sixdegreesofkendrick.com/api/random", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -61,7 +61,7 @@ document.getElementById('artist').addEventListener('input', function(){
         return;
     }
 
-    fetch(`http://localhost:5050/autocomplete?term=${inputValue}`)
+    fetch(`https://sixdegreesofkendrick.com/api/autocomplete?term=${inputValue}`)
     .then((res) => {
         return res.json();
     })
@@ -131,6 +131,5 @@ const spotifyPreviewBox = (spotifyTrackId) => {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = spotifyPreviewPlayer;
     const node = tempDiv.firstChild;
-    console.log('spotifyPreviewBox is returning:', node);
     return node;
 };

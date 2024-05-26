@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link  href="./styles/output.css" rel="stylesheet"/>
+    <script src="formScript.js" defer></script>
+    <title>Six Degrees of Kendrick</title>
+</head>
+<body class="flex flex-col flex-wrap bg-slate-950 gap-y-20 justify-center p-5">
+    <header class="flex flex-col flex-auto justify-center items-center text-white my-4">
+        <a class="flex flex-row flex-auto justify-center items-center no-underline text-current mx-auto mt-4 p-2 font-bold hover:text-green-500 gap-4" href="/">
+            <h1 class="text-5xl">SIX DEGREES OF KENDRICK</h1>
+        </a>
+        <h5 class= "text-slate-400 mx-auto my-3 px-2 text-2xl">How far is your favourite artist from Kendrick?</h5>
+    </header>
+
+    <main class="flex flex-col flex-auto text-white gap-6">
+        <article class="flex flex-col w-full items-center justify-center text-4xl text-slate-500 font-medium gap-4 hidden" id="artist-result">
+            <h5> <span class="text-green-700">Kendrick</span> & <span class="text-green-700" id="searched-artist-name"></span> are <span id="degree-of-separation"></span> degree apart </h5>
+            <h5>Here is how they are connected </h5>
+
+            <div class="mt-2" id="tracks">
+            </div>
+        </article>
+
+        <form action="/search" method="post" id="search-form" class="w-2/5 self-center">
+            <div class="flex flex-row flex-wrap justify-center items-end py-2 ">
+                <div class="border-b-2 border-b-green-500 mr-3">
+                    <input 
+                        id="artist" 
+                        name="artist" 
+                        class="appearance-none bg-transparent border-none h-11 mr-3 py-1 px-2 leading-tight focus:outline-none border-b border-teal-500" 
+                        type="text" 
+                        placeholder="Enter Artist" 
+                        aria-label="Artist Name" 
+                        required
+                    >
+                    <div id="autocomplete-results" class="absolute z-10 w-full border shadow-md mt-1 hidden overflow-auto max-h-60"></div>
+                </div>
+
+                <button class="sm:w-36 md:w-36 max-w-48 h-11 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 text-base border-4 text-white py-1 px-2 rounded" type="submit">
+                    Search
+                </button>
+            </div>
+        </form>
+
+        <article class="gap-y-2 text-xl mx-auto">
+            <h5 class= "text-slate-400 mx-auto my-3 px-2">Choose a random artist</h5>
+            <button id="random-button" class="text-base w-56 h-11 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 border-4 text-white px-1 rounded" type="button">
+                <span>Random</span> 
+                <i class="fas fa-random"></i>
+            </button>
+        </article>
+    </main>
+    
+    <footer class="text-white mx-auto mt-10">            
+        <article class="flex flex-row justify-between items-center">
+            <div class="flex flex-row gap-5 border-r-2 border-r-green-500 p-3">
+                <a href="https://www.instagram.com/rish.jpeg" target="_blank">
+                    <i class="fab fa-instagram fa-2x"></i>
+                </a>
+                <a href="https://twitter.com/x_rishabhtyagi" target="_blank">
+                    <i class="fab fa-twitter fa-2x"></i>
+                </a>
+                <a href="https://github.com/rrtyagii" target="_blank">
+                    <i class="fab fa-github fa-2x"></i>
+                </a>
+            </div>
+            <div class="flex flex-row p-3">
+                <p class="text-slate-400">Made with <i class="fas fa-heart text-red-500"></i> by <a href="" >Rishabh</a>
+            </div>
+        </article>
+    </footer>
+    
+</body>
+</html>
