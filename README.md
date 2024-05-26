@@ -10,6 +10,8 @@ Website by [Rishabh Tyagi](https://www.rishtyagi.com).
 
 This website is made possible with the use of the [Spotify Web API](https://developer.spotify.com/documentation/web-api) and [spotify-typescript-sdk](https://developer.spotify.com/blog/2023-07-03-typescript-sdk).
 
+check it out [here](https://sixdegreesofkendrick.com/): 
+
 ## Getting Started
 
 First, run the development server:
