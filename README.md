@@ -16,12 +16,8 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+<img width="1509" alt="Screenshot 2024-05-25 at 11 53 30 PM" src="https://github.com/rrtyagii/6-degrees-of-kendrick/assets/47730677/f32b2c68-60b9-4d34-8850-6dd5c4a431e9">
