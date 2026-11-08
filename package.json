@@ -17,7 +17,7 @@
   "type": "commonjs",
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@supabase/supabase-js": "^2.112.2",
+    "@supabase/supabase-js": "^2.119.0",
     "dotenv": "^17.4.2",
     "express": "^4.22.2",
     "express-rate-limit": "^8.6.2",
