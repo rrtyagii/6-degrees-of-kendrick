@@ -3,38 +3,32 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
-    "dev":"npx tailwindcss -i ./src/styles/styles.css -o ./src/styles/output.css --watch && node ./build/server.js",
-    "build": "esrun build",
-    "start": "esrun start",
-    "lint": "esrun lint",
-    "type-check": "esrun type-check",
-    "test": "esrun test"
+    "css": "tailwindcss -i ./src/styles/styles.css -o ./src/styles/output.css",
+    "dev": "npm run build && node scripts/dev.cjs",
+    "build": "npm run css && tsc",
+    "start": "node build/server.js",
+    "lint": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
+    "test": "npm run type-check && npm run build && node --test build/test/*.test.js"
   },
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "@spotify/web-api-ts-sdk": "^1.2.0",
-    "@supabase/supabase-js": "^2.39.7",
-    "@types/cors": "^2.8.17",
-    "@vercel/postgres": "^0.7.2",
-    "clsx": "^2.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "esrun": "^3.2.26",
-    "express": "^4.19.2",
-    "node-fetch": "^3.3.2",
-    "postgres": "^3.4.3"
+    "@supabase/supabase-js": "^2.112.2",
+    "dotenv": "^17.4.2",
+    "express": "^4.22.2",
+    "express-rate-limit": "^8.6.2",
+    "helmet": "^8.3.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20",
-    "autoprefixer": "^10.0.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.1.0",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "@types/express": "^4.17.25",
+    "@types/node": "^20.19.43",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
   }
 }

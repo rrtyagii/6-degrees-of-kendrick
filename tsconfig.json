@@ -1,32 +1,25 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "ES2022",
+    "module": "CommonJS",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "strict": true,
     "noEmit": false,
+    "noEmitOnError": true,
     "outDir": "./build",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
     "incremental": true,
-    "sourceMap": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "sourceMap": true
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/**/*",
+    "server.ts",
+    "tailwind.config.ts",
     "src/**/*.ts",
-    "src/**/*.tsx"
+    "test/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "build"]
 }

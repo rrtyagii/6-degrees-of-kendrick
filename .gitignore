@@ -19,6 +19,11 @@
 # misc
 .DS_Store
 *.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
 
 # debug
 npm-debug.log*
@@ -26,9 +31,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
-.env.development
-.env
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -41,3 +45,4 @@ src/lib/*.json
 next-env.d.ts
 
 /mocks
+/.vscode

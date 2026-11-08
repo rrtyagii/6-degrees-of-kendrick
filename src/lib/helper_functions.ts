@@ -7,20 +7,16 @@ import { SupabaseClient, createClient } from "@supabase/supabase-js";
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-let supabase : SupabaseClient<Database>; 
-const [SUPABASE_URL, SUPABASE_KEY] = 
-    ['SUPABASE_URL', 'SUPABASE_KEY'].map(key => {
-        const value = process.env[key];
-        if (!value) throw new Error(`${key} is not set in ${__filename}`);
-        return value;
-    }
-);
+let supabase: SupabaseClient<Database> | undefined;
 
-try{
+function getSupabase(): SupabaseClient<Database> {
+    if (supabase) return supabase;
+    const { SUPABASE_URL, SUPABASE_KEY } = process.env;
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+        throw new Error("SUPABASE_URL and SUPABASE_KEY are required for database maintenance");
+    }
     supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
-} catch(error : any){
-    console.error("helper_function -> error in setting up supabase\n", error);
-    throw error;
+    return supabase;
 }
 
 export const readFileAsJson = async (filename: string) => {
@@ -63,7 +59,7 @@ export const appendOrCreateJSONFile = async(filename: string, data: any) => {
 }
 
 export const insertIntoArtistTable = async(name:string, spotify_id:string, popularity:number) => {
-    const {data, error} = await supabase.from("Artist").insert([{
+    const {data, error} = await getSupabase().from("Artist").insert([{
         name: name,
         spotify_id: spotify_id,
         popularity: popularity,
@@ -79,7 +75,7 @@ export const insertIntoArtistTable = async(name:string, spotify_id:string, popul
 };
 
 export const getArtistFromArtistTable = async(spotify_id:string) => {
-    const {data, error} = await supabase.from("Artist").select().eq("spotify_id", spotify_id);
+    const {data, error} = await getSupabase().from("Artist").select().eq("spotify_id", spotify_id);
 
     if(error){
         console.error("error getArtistFromArtistTable\n", error);
@@ -91,7 +87,7 @@ export const getArtistFromArtistTable = async(spotify_id:string) => {
 }
 
 export const getArtistFromArtistTableById = async(id:any) => {
-    const {data, error} = await supabase.from("Artist").select().eq("id", id);
+    const {data, error} = await getSupabase().from("Artist").select().eq("id", id);
 
     if(error){
         console.error("error getArtistFromArtistTable\n", error);
@@ -103,7 +99,7 @@ export const getArtistFromArtistTableById = async(id:any) => {
 }
 
 export const getAllArtistFromArtistTable= async() => {
-    const {data, error} = await supabase.from("Artist").select();
+    const {data, error} = await getSupabase().from("Artist").select();
 
     if(error){
         console.error("error getArtistFromArtistTableById\n", error);
@@ -115,7 +111,7 @@ export const getAllArtistFromArtistTable= async() => {
 }
 
 export const getAllTracksFromTracksTable = async() => {
-    const {data, error} = await supabase.from("Tracks").select();
+    const {data, error} = await getSupabase().from("Tracks").select();
 
     if(error){
         console.error("error getAllTracksFromTracksTable\n", error);
@@ -127,7 +123,7 @@ export const getAllTracksFromTracksTable = async() => {
 }
 
 export const getTrackFromTracksTable = async(spotify_id:string) => {
-    const {data, error} = await supabase.from("Tracks").select().eq("spotify_id", spotify_id);
+    const {data, error} = await getSupabase().from("Tracks").select().eq("spotify_id", spotify_id);
     
     if(error){
         console.error("error getTrackFromTracksTable\n", error);
@@ -139,7 +135,7 @@ export const getTrackFromTracksTable = async(spotify_id:string) => {
 }
 
 export const getTrackFromTracksTableById = async(id: any) => {
-    const {data, error} = await supabase.from("Tracks").select().eq("id", id);
+    const {data, error} = await getSupabase().from("Tracks").select().eq("id", id);
     
     if(error){
         console.error("error getTrackFromTracksTable\n", error);
@@ -155,7 +151,7 @@ export const insertIntoTracksTable = async(
     preview_url:string,
     spotify_id:string,
 ) =>{
-    const {data, error} = await supabase.from("Tracks").insert([{
+    const {data, error} = await getSupabase().from("Tracks").insert([{
         name: name,
         preview_url: preview_url,
         spotify_id: spotify_id,
@@ -170,7 +166,7 @@ export const insertIntoTracksTable = async(
 }
 
 export const getArtist_TrackFromArtist_TrackTable = async() => {
-    const {data, error} = await supabase.from("Artist_Track").select();
+    const {data, error} = await getSupabase().from("Artist_Track").select();
 
     if(error){
         console.error("error getArtist_TrackFromArtist_TrackTable\n", error);
@@ -185,7 +181,7 @@ export const insertIntoArtist_TrackTable = async(
     artist_id:any,
     track_id:any,
 ) =>{
-    const {data, error} = await supabase.from("Artist_Track").insert([{
+    const {data, error} = await getSupabase().from("Artist_Track").insert([{
         artist_id: artist_id,
         track_id: track_id,
     }]);
@@ -199,7 +195,7 @@ export const insertIntoArtist_TrackTable = async(
 }
 
 export const getArtist_TrackFromtrack_artistView = async() => {
-    const {data, error} = await supabase.from("track_artists").select();
+    const {data, error} = await getSupabase().from("track_artists").select();
 
     if(error){
         console.error("error getArtist_TrackFromtrack_artistView\n", error);
@@ -211,7 +207,7 @@ export const getArtist_TrackFromtrack_artistView = async() => {
 }
 
 export const getTop1000Artists = async() => {
-    const {data, error} = await supabase.from("Artist").select().order("popularity", {ascending: false}).range(0, 200);
+    const {data, error} = await getSupabase().from("Artist").select().order("popularity", {ascending: false}).range(0, 200);
 
     if(error){
         console.error("error getting Top 1000 Artists\n", error);
@@ -222,33 +218,3 @@ export const getTop1000Artists = async() => {
         return data;
     }
 }
-
-export const getRandomArtistName = async() =>{
-    try{
-        const artists = await readFileAsJson(path.resolve(__dirname, '../mocks/current_artists.json'));
-        const randomIndex = Math.floor(Math.random() * artists.length);
-        return artists[randomIndex];
-    }
-    catch(error){
-        console.error("error in getRandomArtistName\n", error);
-        throw error;
-    }
-};
-
-export const postAutoComplete = async (searchQuery: any) => {
-    try {
-        const { data, error } = await supabase
-            .from("Artist")
-            .select()
-            .ilike("name", `%${searchQuery}%`);
-
-        if (error) {
-            throw new Error(`Error in postAutoComplete: ${error.message}`);
-        }
-
-        return data;
-    } catch (error) {
-        console.error("Error in postAutoComplete", error);
-        throw error;
-    }
-};

@@ -73,4 +73,9 @@ async function main(){
     await processTracks();
 }
 
-main()
+if (require.main === module) {
+    main().catch(error => {
+        console.error("Database population failed:", error.message);
+        process.exitCode = 1;
+    });
+}

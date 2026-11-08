@@ -30,13 +30,17 @@ let OFFSET = 0;
 // await fs.promises.writeFile("current_artist_tracks.json", JSON.stringify(currentArtist_Track, null, 2));
 
 //const tracks_to_add = await readFileAsJson("tracks_to_add.json");
-const currentArtists = await readFileAsJson("../mocks/current_artists.json");
+const currentArtists = JSON.parse(
+    fs.readFileSync(path.resolve(process.cwd(), "src/mocks/current_artists.json"), "utf8"),
+);
 const currentArtistSet = new Set();
 currentArtists.forEach((artist:any) => {
     currentArtistSet.add(artist.spotify_id);
 });
 
-const currentTracks = await readFileAsJson("../mocks/current_tracks.json");
+const currentTracks = JSON.parse(
+    fs.readFileSync(path.resolve(process.cwd(), "src/mocks/current_tracks.json"), "utf8"),
+);
 const currentTrackSet = new Set();
 currentTracks.forEach((track:any) => {
     currentTrackSet.add(track.spotify_id);

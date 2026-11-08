@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link  href="./styles/output.css" rel="stylesheet"/>
     <script src="formScript.js" defer></script>
     <title>Six Degrees of Kendrick</title>
@@ -18,16 +17,16 @@
 
     <main class="flex flex-col flex-auto text-white gap-6">
         <article class="flex flex-col w-full items-center justify-center text-4xl text-slate-500 font-medium gap-4 hidden" id="artist-result">
-            <h5> <span class="text-green-700">Kendrick</span> & <span class="text-green-700" id="searched-artist-name"></span> are <span id="degree-of-separation"></span> degree apart </h5>
-            <h5>Here is how they are connected </h5>
+            <h5> <span class="text-green-700">Kendrick</span> & <span class="text-green-700" id="searched-artist-name"></span> are <span id="degree-of-separation"></span> <span id="degree-label">degrees</span> apart </h5>
+            <h5 id="connection-heading">Here is how they are connected </h5>
 
             <div class="mt-2" id="tracks">
             </div>
         </article>
 
-        <form action="/search" method="post" id="search-form" class="w-2/5 self-center">
+        <form action="/api/search" method="post" id="search-form" class="w-full max-w-lg self-center">
             <div class="flex flex-row flex-wrap justify-center items-end py-2 ">
-                <div class="border-b-2 border-b-green-500 mr-3">
+                <div class="relative border-b-2 border-b-green-500 mr-3">
                     <input 
                         id="artist" 
                         name="artist" 
@@ -35,9 +34,11 @@
                         type="text" 
                         placeholder="Enter Artist" 
                         aria-label="Artist Name" 
+                        autocomplete="off"
+                        maxlength="100"
                         required
                     >
-                    <div id="autocomplete-results" class="absolute z-10 w-full border shadow-md mt-1 hidden overflow-auto max-h-60"></div>
+                    <div id="autocomplete-results" aria-label="Artist suggestions" class="absolute z-10 w-full border shadow-md mt-1 hidden overflow-auto max-h-60 bg-slate-950"></div>
                 </div>
 
                 <button class="sm:w-36 md:w-36 max-w-48 h-11 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 text-base border-4 text-white py-1 px-2 rounded" type="submit">
@@ -45,12 +46,12 @@
                 </button>
             </div>
         </form>
+        <p id="search-error" class="hidden text-center text-red-400" role="alert"></p>
 
         <article class="gap-y-2 text-xl mx-auto">
             <h5 class= "text-slate-400 mx-auto my-3 px-2">Choose a random artist</h5>
             <button id="random-button" class="text-base w-56 h-11 flex-shrink-0 bg-green-500 hover:bg-green-700 border-green-500 hover:border-green-700 border-4 text-white px-1 rounded" type="button">
-                <span>Random</span> 
-                <i class="fas fa-random"></i>
+                <span>Random artist</span>
             </button>
         </article>
     </main>
@@ -58,18 +59,18 @@
     <footer class="text-white mx-auto mt-10">            
         <article class="flex flex-row justify-between items-center">
             <div class="flex flex-row gap-5 border-r-2 border-r-green-500 p-3">
-                <a href="https://www.instagram.com/rish.jpeg" target="_blank">
-                    <i class="fab fa-instagram fa-2x"></i>
+                <a href="https://www.instagram.com/rish.jpeg" target="_blank" rel="noreferrer">
+                    Instagram
                 </a>
-                <a href="https://twitter.com/x_rishabhtyagi" target="_blank">
-                    <i class="fab fa-twitter fa-2x"></i>
+                <a href="https://twitter.com/x_rishabhtyagi" target="_blank" rel="noreferrer">
+                    Twitter
                 </a>
-                <a href="https://github.com/rrtyagii" target="_blank">
-                    <i class="fab fa-github fa-2x"></i>
+                <a href="https://github.com/rrtyagii" target="_blank" rel="noreferrer">
+                    GitHub
                 </a>
             </div>
             <div class="flex flex-row p-3">
-                <p class="text-slate-400">Made with <i class="fas fa-heart text-red-500"></i> by <a href="" >Rishabh</a>
+                <p class="text-slate-400">Made by Rishabh</p>
             </div>
         </article>
     </footer>

@@ -1,135 +1,159 @@
-document.getElementById('search-form').addEventListener('submit', function(e) {
-    e.preventDefault();
+'use strict';
 
-    const artistName = document.getElementById('artist').value;
-    fetch("https://sixdegreesofkendrick.com/api/search", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ artist: artistName })
-    }).then((res) => {
-        if(res.ok) {
-            return res.json();
-        } else {
-            throw new Error('Failed to fetch random artist');
-        }
-    })
-    .then((data) => {
-        console.log("Search artist data:", data);
-        if (data) {
-            displayDegreeOfSeparation(data, false, artistName);
-        }
-    })
-    .catch(err => console.error(err));
-});
+const searchForm = document.getElementById('search-form');
+const artistInput = document.getElementById('artist');
+const searchButton = searchForm.querySelector('button[type="submit"]');
+const randomButton = document.getElementById('random-button');
+const resultList = document.getElementById('autocomplete-results');
+const errorMessage = document.getElementById('search-error');
+const result = document.getElementById('artist-result');
+let autocompleteController;
+let autocompleteTimer;
+let autocompleteVersion = 0;
+let searchController;
 
-document.getElementById('random-button').addEventListener('click', function(e) {
-    e.preventDefault();
-
-    fetch("https://sixdegreesofkendrick.com/api/random", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }).then((res) => {
-        if(res.ok) {
-            return res.json();
-        } else {
-            throw new Error('Failed to fetch random artist');
-        }
-    })
-    .then((data) => {
-        console.log("Random artist data:", data);
-        if (data) {
-            displayDegreeOfSeparation(data, true);
-        }
-    })
-    .catch(err => {
-        console.error('Fetch Error:', err);
-        alert('Failed to fetch data for a random artist');
-    });
-});
-
-document.getElementById('artist').addEventListener('input', function(){
-    const inputValue = this.value;
-    const resultList = document.getElementById('autocomplete-results');
-
-    if (inputValue.length < 2 ) {
-        resultList.innerHTML = '';
-        resultList.classList.add('hidden');
-        return;
-    }
-
-    fetch(`https://sixdegreesofkendrick.com/api/autocomplete?term=${inputValue}`)
-    .then((res) => {
-        return res.json();
-    })
-    .then((names)=>{
-        resultList.innerHTML = '';
-
-        if (names.length > 0) {
-            resultList.classList.remove('hidden');
-        } else {
-            resultList.classList.add('hidden');
-        }
-
-        names.forEach((name) => {
-            let resultItem = document.createElement('div');
-            resultItem.textContent = name;
-            resultItem.className = 'p-2 hover:bg-neutral-900 cursor-pointer';
-            resultItem.addEventListener('click', () => {
-                document.getElementById('artist').value = name;
-                resultList.innerHTML = '';
-                resultList.classList.add('hidden');
-            });
-            resultList.appendChild(resultItem);
-        });
-    })
-    .catch(error => console.error('Autocomplete error:', error));
-});
-
-document.addEventListener('click', function (e) {
-    if (e.target.id !== 'artist') {
-        document.getElementById('autocomplete-results').classList.add('hidden');
-    }
-});
-
-function displayDegreeOfSeparation(data, isRandom = false, artistName) {
-    let trackId = '';
-    const path = data.path;
-
-    const degreeOfSeparation = document.getElementById('degree-of-separation');
-    const searchedArtistName = document.getElementById('searched-artist-name');
-
-    degreeOfSeparation.innerHTML = data.degree;
-
-    if(isRandom) {
-        const path = data.path;
-        artist = path[path.length - 1].artist;
-        searchedArtistName.innerHTML = artist;
-    } else {
-        searchedArtistName.innerHTML = artistName;
-    }
-
-    const track = document.getElementById("tracks");
-    track.innerHTML = '';
-
-    path.forEach(artist => {
-        trackId = artist.track.spotifyId;
-        const spotifyPreview = spotifyPreviewBox(trackId);
-        track.appendChild(spotifyPreview);
-    });
-
-    document.getElementById('artist-result').classList.remove('hidden');
+function hideSuggestions() {
+    clearTimeout(autocompleteTimer);
+    autocompleteController?.abort();
+    autocompleteVersion += 1;
+    resultList.replaceChildren();
+    resultList.classList.add('hidden');
 }
 
+function setError(message = '') {
+    errorMessage.textContent = message;
+    errorMessage.classList.toggle('hidden', !message);
+}
 
-const spotifyPreviewBox = (spotifyTrackId) => {
-    const spotifyPreviewPlayer = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${spotifyTrackId}?utm_source=generator&theme=0" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
-    </iframe>`;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = spotifyPreviewPlayer;
-    const node = tempDiv.firstChild;
-    return node;
-};
+async function requestJson(url, options) {
+    const response = await fetch(url, options);
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || 'Unable to complete this request');
+    return body;
+}
+
+async function searchArtist(url, artist) {
+    searchController?.abort();
+    const controller = new AbortController();
+    searchController = controller;
+    hideSuggestions();
+    setError();
+    result.classList.add('hidden');
+    document.getElementById('tracks').replaceChildren();
+    searchButton.disabled = true;
+    randomButton.disabled = true;
+    searchForm.setAttribute('aria-busy', 'true');
+    try {
+        const data = await requestJson(url, {
+            method: 'POST',
+            ...(artist ? {
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ artist }),
+            } : {}),
+            signal: controller.signal,
+        });
+        if (searchController !== controller) return;
+        const name = data.path.at(-1)?.artist || 'Kendrick Lamar';
+        artistInput.value = name;
+        displayDegreeOfSeparation(data, name);
+    } catch (error) {
+        if (searchController === controller && error.name !== 'AbortError') setError(error.message);
+    } finally {
+        if (searchController === controller) {
+            searchButton.disabled = false;
+            randomButton.disabled = false;
+            searchForm.setAttribute('aria-busy', 'false');
+        }
+    }
+}
+
+searchForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const artist = artistInput.value.trim();
+    if (artist) searchArtist('/api/search', artist);
+});
+
+randomButton.addEventListener('click', () => searchArtist('/api/random'));
+
+artistInput.addEventListener('input', () => {
+    hideSuggestions();
+    const inputValue = artistInput.value.trim();
+    if (inputValue.length < 2 || inputValue.length > 100) return;
+    const version = autocompleteVersion;
+
+    autocompleteTimer = setTimeout(async () => {
+        autocompleteController = new AbortController();
+        try {
+            const names = await requestJson(`/api/autocomplete?term=${encodeURIComponent(inputValue)}`, {
+                signal: autocompleteController.signal,
+            });
+            if (version !== autocompleteVersion) return;
+            resultList.replaceChildren(...names.map(name => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.textContent = name;
+                item.className = 'block w-full p-2 text-left hover:bg-neutral-900';
+                item.addEventListener('click', () => {
+                    artistInput.value = name;
+                    hideSuggestions();
+                    artistInput.focus();
+                });
+                return item;
+            }));
+            resultList.classList.toggle('hidden', names.length === 0);
+        } catch (error) {
+            if (version === autocompleteVersion && error.name !== 'AbortError') hideSuggestions();
+        }
+    }, 200);
+});
+
+document.addEventListener('click', event => {
+    if (event.target !== artistInput && !resultList.contains(event.target)) hideSuggestions();
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') hideSuggestions();
+    if (event.key === 'ArrowDown' && event.target === artistInput) {
+        event.preventDefault();
+        resultList.firstElementChild?.focus();
+    }
+});
+
+function displayDegreeOfSeparation(data, artistName) {
+    document.getElementById('degree-of-separation').textContent = String(data.degree);
+    document.getElementById('degree-label').textContent = data.degree === 1 ? 'degree' : 'degrees';
+    document.getElementById('searched-artist-name').textContent = artistName;
+    document.getElementById('connection-heading').hidden = data.degree === 0;
+
+    const tracks = document.getElementById('tracks');
+    let previous = 'Kendrick Lamar';
+    tracks.replaceChildren(...data.path.map(({ artist, track }) => {
+        const connection = document.createElement('section');
+        connection.className = 'connection';
+        const heading = document.createElement('h3');
+        heading.textContent = `${previous} / ${artist}`;
+        previous = artist;
+        const title = document.createElement('p');
+        title.textContent = track.name;
+        connection.append(heading, title);
+
+        if (/^[A-Za-z0-9]{22}$/.test(track.spotifyId)) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = 'Load Spotify player';
+            button.addEventListener('click', () => {
+                const frame = document.createElement('iframe');
+                frame.src = `https://open.spotify.com/embed/track/${track.spotifyId}?theme=0`;
+                frame.className = 'spotify-embed';
+                frame.allow = 'encrypted-media; fullscreen; picture-in-picture';
+                frame.title = track.name;
+                frame.referrerPolicy = 'no-referrer';
+                frame.sandbox = 'allow-forms allow-popups allow-presentation allow-same-origin allow-scripts';
+                button.replaceWith(frame);
+            }, { once: true });
+            connection.append(button);
+        }
+        return connection;
+    }));
+    result.classList.remove('hidden');
+}
