@@ -62,7 +62,7 @@ test("sanitizes parser errors and rejects compressed and oversized payloads", as
 });
 
 test("source, data, dotfiles and encoded traversal are not public", async () => {
-    for (const pathname of ["/.env", "/privateKey.pem", "/lib/helper_functions.ts", "/mocks/current_artists.json", "/%2e%2e%2f.env"]) {
+    for (const pathname of ["/.env", "/privateKey.pem", "/lib/helper_functions.ts", "/mocks/current_artists.json", "/maintenance/.env", "/maintenance/package.json", "/maintenance/src/populate_database.ts", "/%2e%2e%2f.env"]) {
         assert.equal((await fetch(base + pathname)).status, 404, pathname);
     }
     for (const pathname of ["/", "/formScript.js", "/styles/output.css", "/favicon.ico"]) {

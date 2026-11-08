@@ -1,10 +1,8 @@
 import * as path from 'path';
-import * as dotenv from 'dotenv';
+import { dataDirectory } from './paths';
 
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import {readFileAsJson, insertIntoArtistTable, getArtistFromArtistTable, insertIntoTracksTable, getTrackFromTracksTable, insertIntoArtist_TrackTable } from "./helper_functions";
-
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const [SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET] = 
     ['CLIENT_ID', 'CLIENT_SECRET'].map(key => {
@@ -19,7 +17,7 @@ const CHUNK_SIZE = 50;
 
 
 async function processArtists () {
-    const artists = await readFileAsJson("../mocks/artists_to_add.json");
+    const artists = await readFileAsJson(path.join(dataDirectory, "artists_to_add.json"));
     // const ids_array = artists.map((artist:any) => artist.spotify_id);
 
     for(let i=0; i<artists.length; i+=CHUNK_SIZE){
@@ -37,7 +35,7 @@ async function processArtists () {
 }
 
 async function processTracks() {
-    const tracks = await readFileAsJson("../mocks/tracks_to_add.json");
+    const tracks = await readFileAsJson(path.join(dataDirectory, "tracks_to_add.json"));
     //const trackIds = tracks.map((track:any) => track.spotify_id);
     console.log("tracks length: \n", tracks.length);
     console.log('tracks: \n', tracks);

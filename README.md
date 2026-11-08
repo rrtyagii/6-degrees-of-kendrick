@@ -40,7 +40,10 @@ the default in-memory counters are per process. Terminate HTTPS at the hosting
 platform and set `NODE_ENV=production` to enable HSTS and HTTPS-only CSP upgrades.
 
 Spotify players load only after selecting "Load Spotify player". Searching itself
-does not contact Spotify. The optional database/Spotify maintenance scripts are
-separate from the HTTP application and should only run with administrator credentials.
+does not contact Spotify. The optional database/Spotify maintenance scripts live in
+the independent [`maintenance/`](maintenance/README.md) package. They have their own
+lockfile and dependencies; root `npm ci` does not install the SDKs or dotenv.
+Install those tools only when collecting or updating data, and exclude
+`maintenance/` from the website deployment.
 
 <img width="1509" alt="Screenshot 2024-05-25 at 11 53 30 PM" src="https://github.com/rrtyagii/6-degrees-of-kendrick/assets/47730677/f32b2c68-60b9-4d34-8850-6dd5c4a431e9">

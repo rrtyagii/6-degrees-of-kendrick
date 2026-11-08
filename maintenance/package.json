@@ -1,0 +1,24 @@
+{
+  "name": "6-deg-of-kendrick-maintenance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "build": "tsc",
+    "collect": "npm run build && node build/src/fetching_data_spotify.js",
+    "populate": "npm run build && node build/src/populate_database.js"
+  },
+  "dependencies": {
+    "@spotify/web-api-ts-sdk": "1.2.0",
+    "@supabase/supabase-js": "2.112.2",
+    "dotenv": "17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "typescript": "5.9.3"
+  }
+}

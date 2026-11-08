@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/maintenance/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -15,6 +16,7 @@
 
 # production
 /build
+/maintenance/build
 
 # misc
 .DS_Store

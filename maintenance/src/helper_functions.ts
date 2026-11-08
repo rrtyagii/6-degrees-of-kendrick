@@ -1,11 +1,7 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
-
 import { Database } from "../types/database.types";
 import { SupabaseClient, createClient } from "@supabase/supabase-js";
-
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+import "./paths";
 
 let supabase: SupabaseClient<Database> | undefined;
 
