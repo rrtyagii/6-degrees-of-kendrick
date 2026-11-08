@@ -24,7 +24,7 @@
     "@types/express": "^4.17.25",
     "@types/node": "^20.19.43",
     "autoprefixer": "^10.5.4",
-    "postcss": "^8.5.26",
+    "postcss": "^8.5.32",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3"
   }
