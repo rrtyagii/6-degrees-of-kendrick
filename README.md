@@ -55,8 +55,8 @@ CodeQL actions update together to avoid mixing incompatible init/analyze version
 CI audits both lockfiles and runs the build/tests on PRs, daily, and on demand.
 
 Optional automatic merging is disabled by default. To enable it, first protect
-`main` with required checks `verify`, `maintenance`, and
-`Analyze JavaScript and TypeScript`, and require branches to be up to date. Then
+`main` with required checks `verify`, `maintenance`,
+`Analyze JavaScript and TypeScript`, and `CodeQL`. Require branches to be up to date. Then
 enable the repository's **Allow auto-merge** setting and set the Actions repository
 variable `DEPENDABOT_AUTOMERGE` to `true`.
 

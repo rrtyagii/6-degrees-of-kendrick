@@ -28,7 +28,7 @@ jobs:
       - name: Check repository safeguards and changed files
         id: safeguards
         if: >-
-          steps.metadata.outputs.package-ecosystem == 'npm' &&
+          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
           (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
            steps.metadata.outputs.update-type == 'version-update:semver-minor') &&
           steps.metadata.outputs.maintainer-changes != 'true'
@@ -48,7 +48,7 @@ jobs:
           required=false
           for attempt in $(seq 1 12); do
             if gh pr checks "$PR_NUMBER" --repo "$GH_REPO" --required --json name,state > "$RUNNER_TEMP/checks.json" &&
-               jq -e 'map(.name) | contains(["verify", "maintenance", "Analyze JavaScript and TypeScript"])' "$RUNNER_TEMP/checks.json" > /dev/null; then
+               jq -e 'map(.name) | contains(["verify", "maintenance", "Analyze JavaScript and TypeScript", "CodeQL"])' "$RUNNER_TEMP/checks.json" > /dev/null; then
               required=true
               break
             fi
