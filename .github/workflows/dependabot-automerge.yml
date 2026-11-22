@@ -1,0 +1,74 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions: {}
+
+jobs:
+  enable:
+    if: >-
+      vars.DEPENDABOT_AUTOMERGE == 'true' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # This privileged workflow reads metadata only. Never check out or run PR code here.
+      - name: Verify Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check repository safeguards and changed files
+        id: safeguards
+        if: >-
+          steps.metadata.outputs.package-ecosystem == 'npm_and_yarn' &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-minor') &&
+          steps.metadata.outputs.maintainer-changes != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -eu
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          if [ "$(gh api "repos/$GH_REPO" --jq '.allow_auto_merge')" != true ]; then
+            echo "::notice::Repository auto-merge must be enabled first."
+            exit 0
+          fi
+          # The required-checks API works with GITHUB_TOKEN; the branch-protection
+          # REST endpoint would require an administrator credential.
+          required=false
+          for attempt in $(seq 1 12); do
+            if gh pr checks "$PR_NUMBER" --repo "$GH_REPO" --required --json name,state > "$RUNNER_TEMP/checks.json" &&
+               jq -e 'map(.name) | contains(["verify", "maintenance", "Analyze JavaScript and TypeScript", "CodeQL"])' "$RUNNER_TEMP/checks.json" > /dev/null; then
+              required=true
+              break
+            fi
+            sleep 10
+          done
+          if [ "$required" != true ]; then
+            echo "::notice::Cannot verify required CI, maintenance, and CodeQL checks; leaving this PR for manual review."
+            exit 0
+          fi
+          gh api --paginate "repos/$GH_REPO/pulls/$PR_NUMBER/files" --jq '.[].filename' > "$RUNNER_TEMP/changed-files.txt"
+          if [ ! -s "$RUNNER_TEMP/changed-files.txt" ] ||
+             grep -Ev '^(package(-lock)?\.json|maintenance/package(-lock)?\.json)$' "$RUNNER_TEMP/changed-files.txt"; then
+            echo "::notice::Changes outside npm manifests and lockfiles require manual review."
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+      - name: Queue merge after required checks pass
+        if: steps.safeguards.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge --auto --squash --match-head-commit "$HEAD_SHA" "$PR_URL"

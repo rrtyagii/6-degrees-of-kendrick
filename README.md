@@ -46,4 +46,24 @@ lockfile and dependencies; root `npm ci` does not install the SDKs or dotenv.
 Install those tools only when collecting or updating data, and exclude
 `maintenance/` from the website deployment.
 
+## Dependency Updates
+
+Dependabot checks npm dependencies daily and groups minor/patch updates separately
+for the website and maintenance tools. Routine version updates have a seven-day
+cooldown; security updates are not delayed. Major upgrades remain separate PRs.
+CodeQL actions update together to avoid mixing incompatible init/analyze versions.
+CI audits both lockfiles and runs the build/tests on PRs, daily, and on demand.
+
+Optional automatic merging is disabled by default. To enable it, first protect
+`main` with required checks `verify`, `maintenance`,
+`Analyze JavaScript and TypeScript`, and `CodeQL`. Require branches to be up to date. Then
+enable the repository's **Allow auto-merge** setting and set the Actions repository
+variable `DEPENDABOT_AUTOMERGE` to `true`.
+
+The automation accepts only verified Dependabot npm minor/patch PRs that change
+package manifests or lockfiles. It verifies required CI/CodeQL checks before queuing
+a native GitHub auto-merge and never checks out PR code with write permissions. If
+the required checks cannot be verified, the PR stays manual. Major upgrades and GitHub Actions changes
+always require review; tests and advisory audits do not prove a package is malware-free.
+
 <img width="1509" alt="Screenshot 2024-05-25 at 11 53 30 PM" src="https://github.com/rrtyagii/6-degrees-of-kendrick/assets/47730677/f32b2c68-60b9-4d34-8850-6dd5c4a431e9">
