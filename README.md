@@ -1,74 +1,64 @@
-# About
+# Six Degrees of Kendrick
 
-Kendrick Lamar is one of the best to ever to do it, if not the best. 
+Find the shortest chain of musical collaborations between Kendrick Lamar and
+another artist. Search by name, browse autocomplete suggestions, or try a random artist.
 
-With his huge network, there's an enormous library of artists just a stone's throw away from Kendrick. But how short is that stone's throw? Search for an artist and find out for yourself!
+[Visit the website](https://sixdegreesofkendrick.com/)
 
-This website gets its name from the theory of 'Six Degrees of Separation' in which every pair of people on the planet are on average just six connections away from one another.
+## Demo
 
-Website by [Rishabh Tyagi](https://www.rishtyagi.com).
+![App demo showing autocomplete, an artist search, and random selection](docs/demo.gif)
 
-This website is made possible with the use of the [Spotify Web API](https://developer.spotify.com/documentation/web-api) and [spotify-typescript-sdk](https://developer.spotify.com/blog/2023-07-03-typescript-sdk).
+[Watch or download the MP4](docs/demo.mp4) or [view a static screenshot](docs/demo-poster.png).
+Recorded locally using the saved dataset; Spotify playback is not shown.
 
-check it out [here](https://sixdegreesofkendrick.com/): 
+## Run Locally
 
-## Getting Started
+Requires **Node.js 22 or newer** and npm.
 
-First, run the development server:
-
-```bash
+```sh
+npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000). No API keys, Spotify account, or database
+are needed. TypeScript and CSS rebuild automatically; restart after changing datasets.
 
-Use Node.js 22 or newer and run `npm ci` before starting. The development command
-watches TypeScript and CSS; restart it after editing the datasets. Search uses
-the three `src/mocks/current_*.json` datasets and requires no database or Spotify
-credentials. The graph is validated and indexed before the server accepts requests.
+## Commands
 
-The build uses TypeScript 7 with Node16 module resolution and the Tailwind 4 CLI.
-Node typings target Node 22. Tailwind scans only the HTML and browser script, not
-the artist datasets. The browser baseline is Safari 16.4+, Chrome 111+, or Firefox
-128+ because Tailwind 4 relies on modern CSS features.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server with file watching |
+| `npm test` | Run type checks, build, and app/security regression tests |
+| `npm run build` | Compile TypeScript and generate CSS |
+| `npm start` | Run the compiled server after building |
 
-Run `npm test` for graph correctness and HTTP security regressions. Run
-`npm run build`, then `NODE_ENV=production npm start` for production. Deploy
-`build/`, the HTML/script/generated CSS in `src/`, `src/mocks/current_*.json`, and
-`public/favicon.ico`. Keep `.env` files, TLS private keys and maintenance credentials
-out of the deployment artifact.
+For production, run `npm run build`, then `NODE_ENV=production npm start`.
+The default port is 3000; set `PORT` to change it. See
+[deployment and dependency updates](docs/operations.md) before deploying.
 
-The app trusts the direct socket address for rate limiting. Behind a reverse proxy,
-configure trusted proxy addresses for that deployment and apply rate limits at the
-edge. Multiple server instances need an edge limit or shared rate-limit store;
-the default in-memory counters are per process. Terminate HTTPS at the hosting
-platform and set `NODE_ENV=production` to enable HSTS and HTTPS-only CSP upgrades.
+## How It Works
 
-Spotify players load only after selecting "Load Spotify player". Searching itself
-does not contact Spotify. The optional database/Spotify maintenance scripts live in
-the independent [`maintenance/`](maintenance/README.md) package. They have their own
-lockfile and dependencies; root `npm ci` does not install the SDKs or dotenv.
-Install those tools only when collecting or updating data, and exclude
-`maintenance/` from the website deployment.
+The Express server loads saved artist and track data from `src/mocks/current_*.json`.
+A breadth-first search from Kendrick builds an index of shortest collaboration paths,
+so searches reuse the index rather than traverse the graph again. The browser uses
+plain JavaScript and Tailwind CSS.
 
-## Dependency Updates
+Results reflect this dataset, not every collaboration on Spotify. Search does not
+contact Spotify; an embedded player loads only when you select **Load Spotify player**.
 
-Dependabot checks npm dependencies daily and groups minor/patch updates separately
-for the website and maintenance tools. Routine version updates have a seven-day
-cooldown; security updates are not delayed. Major upgrades remain separate PRs.
-CodeQL actions update together to avoid mixing incompatible init/analyze versions.
-CI audits both lockfiles and runs the build/tests on PRs, daily, and on demand.
+## Project Layout
 
-Optional automatic merging is disabled by default. To enable it, first protect
-`main` with required checks `verify`, `maintenance`,
-`Analyze JavaScript and TypeScript`, and `CodeQL`. Require branches to be up to date. Then
-enable the repository's **Allow auto-merge** setting and set the Actions repository
-variable `DEPENDABOT_AUTOMERGE` to `true`.
+- `src/`: browser UI, server routes, graph logic, and saved datasets.
+- `test/`: graph correctness and HTTP security regression tests.
+- `maintenance/`: optional Spotify/Supabase data tools with separate dependencies.
+- `docs/`: demo files and operational notes.
 
-The automation accepts only verified Dependabot npm minor/patch PRs that change
-package manifests or lockfiles. It verifies required CI/CodeQL checks before queuing
-a native GitHub auto-merge and never checks out PR code with write permissions. If
-the required checks cannot be verified, the PR stays manual. Major upgrades and GitHub Actions changes
-always require review; tests and advisory audits do not prove a package is malware-free.
+To collect or update data, follow the [maintenance guide](maintenance/README.md).
+Those tools need their own credentials and are not needed to run the website.
 
-<img width="1509" alt="Screenshot 2024-05-25 at 11 53 30 PM" src="https://github.com/rrtyagii/6-degrees-of-kendrick/assets/47730677/f32b2c68-60b9-4d34-8850-6dd5c4a431e9">
+## Credits
+
+Built by [Rishabh Tyagi](https://www.rishtyagi.com), inspired by six degrees of
+separation. Data collection uses the [Spotify Web API](https://developer.spotify.com/documentation/web-api)
+and [Spotify TypeScript SDK](https://github.com/spotify/spotify-web-api-ts-sdk).
