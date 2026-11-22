@@ -1,8 +1,16 @@
 const { spawn } = require('node:child_process');
+const path = require('node:path');
+
+function packageBin(name, command) {
+    const manifestPath = path.resolve(__dirname, '../node_modules', name, 'package.json');
+    const manifest = require(manifestPath);
+    const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin[command];
+    return path.resolve(path.dirname(manifestPath), bin);
+}
 
 const commands = [
-    [require.resolve('typescript/lib/tsc.js'), '--watch', '--preserveWatchOutput'],
-    [require.resolve('tailwindcss/lib/cli.js'), '-i', 'src/styles/styles.css', '-o', 'src/styles/output.css', '--watch'],
+    [packageBin('typescript', 'tsc'), '--watch', '--preserveWatchOutput'],
+    [packageBin('@tailwindcss/cli', 'tailwindcss'), '-i', 'src/styles/styles.css', '-o', 'src/styles/output.css', '--watch'],
     ['--watch', 'build/server.js'],
 ];
 const children = [];

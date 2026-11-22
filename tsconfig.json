@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "CommonJS",
+    "module": "Node16",
     "lib": ["dom", "dom.iterable", "esnext"],
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -9,7 +9,9 @@
     "noEmit": false,
     "noEmitOnError": true,
     "outDir": "./build",
-    "moduleResolution": "node",
+    "moduleResolution": "Node16",
+    "types": ["node"],
+    "rootDir": ".",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true,
@@ -17,7 +19,6 @@
   },
   "include": [
     "server.ts",
-    "tailwind.config.ts",
     "src/**/*.ts",
     "test/**/*.ts"
   ],
