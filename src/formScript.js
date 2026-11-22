@@ -138,20 +138,17 @@ function displayDegreeOfSeparation(data, artistName) {
         connection.append(heading, title);
 
         if (/^[A-Za-z0-9]{22}$/.test(track.spotifyId)) {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = 'Load Spotify player';
-            button.addEventListener('click', () => {
-                const frame = document.createElement('iframe');
-                frame.src = `https://open.spotify.com/embed/track/${track.spotifyId}?theme=0`;
-                frame.className = 'spotify-embed';
-                frame.allow = 'encrypted-media; fullscreen; picture-in-picture';
-                frame.title = track.name;
-                frame.referrerPolicy = 'no-referrer';
-                frame.sandbox = 'allow-forms allow-popups allow-presentation allow-same-origin allow-scripts';
-                button.replaceWith(frame);
-            }, { once: true });
-            connection.append(button);
+            const frame = document.createElement('iframe');
+            frame.loading = 'lazy';
+            frame.width = '640';
+            frame.height = '152';
+            frame.src = `https://open.spotify.com/embed/track/${track.spotifyId}?theme=0`;
+            frame.className = 'spotify-embed';
+            frame.allow = 'encrypted-media; fullscreen; picture-in-picture';
+            frame.title = track.name;
+            frame.referrerPolicy = 'no-referrer';
+            frame.sandbox = 'allow-forms allow-popups allow-presentation allow-same-origin allow-scripts';
+            connection.append(frame);
         }
         return connection;
     }));

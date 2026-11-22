@@ -10,7 +10,7 @@ another artist. Search by name, browse autocomplete suggestions, or try a random
 ![App demo showing autocomplete, an artist search, and random selection](docs/demo.gif)
 
 [Watch or download the MP4](docs/demo.mp4) or [view a static screenshot](docs/demo-poster.png).
-Recorded locally using the saved dataset; Spotify playback is not shown.
+Recorded locally using the saved dataset. Players load automatically; playback is not started.
 
 ## Run Locally
 
@@ -44,8 +44,12 @@ A breadth-first search from Kendrick builds an index of shortest collaboration p
 so searches reuse the index rather than traverse the graph again. The browser uses
 plain JavaScript and Tailwind CSS.
 
-Results reflect this dataset, not every collaboration on Spotify. Search does not
-contact Spotify; an embedded player loads only when you select **Load Spotify player**.
+Results reflect this dataset, not every collaboration on Spotify. Search uses local
+data; results automatically show Spotify players without starting playback. Players
+near the viewport load first using browser-native lazy loading, with reserved space
+to avoid layout jumps. Embeds contact Spotify, so viewing results sends requests to
+Spotify even if you do not press play. They require internet access and may be
+blocked by privacy extensions.
 
 ## Project Layout
 
