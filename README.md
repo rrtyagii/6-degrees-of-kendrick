@@ -27,6 +27,11 @@ watches TypeScript and CSS; restart it after editing the datasets. Search uses
 the three `src/mocks/current_*.json` datasets and requires no database or Spotify
 credentials. The graph is validated and indexed before the server accepts requests.
 
+The build uses TypeScript 7 with Node16 module resolution and the Tailwind 4 CLI.
+Node typings target Node 22. Tailwind scans only the HTML and browser script, not
+the artist datasets. The browser baseline is Safari 16.4+, Chrome 111+, or Firefox
+128+ because Tailwind 4 relies on modern CSS features.
+
 Run `npm test` for graph correctness and HTTP security regressions. Run
 `npm run build`, then `NODE_ENV=production npm start` for production. Deploy
 `build/`, the HTML/script/generated CSS in `src/`, `src/mocks/current_*.json`, and

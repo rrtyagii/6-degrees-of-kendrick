@@ -50,5 +50,5 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Audit maintenance dependencies
         run: npm audit
-      - name: Build maintenance tools without credentials
-        run: npm run build
+      - name: Build and test maintenance tools without credentials
+        run: npm test
